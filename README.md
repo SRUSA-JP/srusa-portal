@@ -14,6 +14,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - テーマには Material for MkDocs を使用する
 - コンテンツは `docs/` 配下、登山部のページは `docs/mountaineering/` 配下に置く
 - Python 依存関係は `requirements.txt` でバージョンを固定する
+- `main` ブランチの内容を GitHub Actions でビルドし、GitHub Pages へ公開する
 
 ## 未決事項
 
@@ -21,7 +22,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 
 - 各タブに掲載する具体的な情報
 - サイト固有の色、ロゴなどのデザイン
-- ホスティング先とデプロイ方法
+- 公開URLと独自ドメインの有無
 
 ## 現在の管理対象
 
@@ -32,6 +33,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [requirements.txt](requirements.txt): Python 依存関係と固定バージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
+- [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml): GitHub Pages へのビルド・デプロイ設定
 
 ## 開発環境
 
@@ -79,12 +81,26 @@ mkdocs serve
 mkdocs build --strict
 ```
 
+## デプロイ
+
+初回のみ、GitHub のリポジトリ画面で `Settings` → `Pages` → `Build and deployment` → `Source` を開き、`GitHub Actions` を選択します。
+
+以後は `main` ブランチへの push で、次の処理が自動実行されます。
+
+1. Python 3.11 と `requirements.txt` を使って環境を構築する
+2. `mkdocs build --strict` でサイトを生成する
+3. 生成した `site/` を GitHub Pages へデプロイする
+
+GitHub の `Actions` タブから手動実行することもできます。公開URLはデプロイジョブの `github-pages` environment に表示されます。
+
+公開後に問題が見つかった場合は、正常だった状態へ戻すコミットを `main` に反映し、ワークフローを再実行します。
+
 ## 実装順の提案
 
 1. 「ホーム」と「登山部」に掲載する内容を決める
 2. サイト固有の色やロゴなどのデザインを決める
 3. コンテンツを追加し、ローカルビルドで確認する
-4. 公開方法を決め、必要なら CI/CD を追加する
+4. 公開URLと独自ドメインの有無を決める
 
 この順序は提案であり、未決事項の合意に応じて更新します。
 
