@@ -1,0 +1,26 @@
+# Python virtual environments
+.venv/
+venv/
+
+# Python caches and tool state
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# MkDocs build output
+site/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/

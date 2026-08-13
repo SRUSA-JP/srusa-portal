@@ -1,0 +1,19 @@
+site_name: SRUSA Portal
+site_description: SRUSA の情報をまとめるポータルサイト
+
+theme:
+  name: material
+  language: ja
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+
+plugins:
+  - search:
+      lang: ja
+
+nav:
+  - ホーム: index.md
+  - 登山部: mountaineering/index.md
+
+strict: true

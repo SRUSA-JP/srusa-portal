@@ -2,7 +2,7 @@
 
 SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リポジトリです。
 
-現在はサイト実装前の準備段階です。まずリポジトリの目的と作業方針を整え、その後にページ構成、テーマ、開発環境、公開方法を決めます。
+現在は「ホーム」と「登山部」の入口ページを持つ、最小構成のサイトです。
 
 ## 合意済みの内容
 
@@ -11,16 +11,16 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
   - ホーム
   - 登山部
 - MkDocs の実装より先に、README とエージェント向け作業方針を整備する
+- テーマには Material for MkDocs を使用する
+- コンテンツは `docs/` 配下、登山部のページは `docs/mountaineering/` 配下に置く
+- Python 依存関係は `requirements.txt` でバージョンを固定する
 
 ## 未決事項
 
 次の内容はまだ確定していません。実装時に候補と影響を整理して決めます。
 
-- MkDocs のテーマとデザイン
 - 各タブに掲載する具体的な情報
-- Markdown ファイルの配置と URL 設計
-- Python、依存パッケージ、パッケージ管理方法とバージョン
-- ローカルプレビュー、ビルド、テストのコマンド
+- サイト固有の色、ロゴなどのデザイン
 - ホスティング先とデプロイ方法
 
 ## 現在の管理対象
@@ -28,20 +28,63 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [README.md](README.md): リポジトリの目的、合意事項、未決事項
 - [AGENTS.md](AGENTS.md): AI エージェントを含む作業者向けのリポジトリ固有ルール
 - [.gitignore](.gitignore): ローカル環境、生成物、秘密情報の除外設定
-
-MkDocs の設定やコンテンツは、構成を決めた後に追加します。現時点では `mkdocs.yml`、`docs/`、依存関係ファイルはまだありません。
+- [mkdocs.yml](mkdocs.yml): サイト名、テーマ、ナビゲーションなどの MkDocs 設定
+- [requirements.txt](requirements.txt): Python 依存関係と固定バージョン
+- [docs/](docs/): サイトの Markdown コンテンツ
+- [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
 
 ## 開発環境
 
-開発環境は未構築です。利用する Python バージョンと依存管理方法を決めた後、実際に動作確認したセットアップ、プレビュー、ビルド手順をここへ記載します。
+### Dev Container を使用する場合（推奨）
+
+Dockerと、Dev Containerに対応したエディターを用意します。
+
+- Zed: リポジトリを開いたときに表示される `Open in Container` を選択します。表示されない場合は、コマンドパレットの `Project: Open Remote` から Dev Container を選択します。
+- VS Code: Dev Containers 拡張機能を導入し、コマンドパレットから `Dev Containers: Reopen in Container` を実行します。
+
+コンテナ作成後、`requirements.txt` の依存関係が自動的にインストールされます。コンテナ内のターミナルでローカルプレビューを起動します。
+
+```shell
+mkdocs serve --dev-addr=0.0.0.0:8000
+```
+
+エディターに表示される転送済みポートの案内から、ブラウザでサイトを確認できます。
+
+### ホスト環境を使用する場合
+
+Python 3.8 以上と、Python の `venv` モジュールが必要です。Debian/Ubuntu で `venv` がない場合は、使用する Python バージョンに対応した `python3-venv` パッケージを先に導入してください。
+
+仮想環境を作成し、依存関係をインストールします。
+
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+仮想環境内でローカルプレビューを起動します。
+
+```shell
+mkdocs serve
+```
+
+表示された URL（通常は <http://127.0.0.1:8000/>）をブラウザで開きます。
+
+### ビルド
+
+公開用ファイルを `site/` に生成し、設定やリンクを検証します。
+
+```shell
+mkdocs build --strict
+```
 
 ## 実装順の提案
 
-1. テーマ、依存管理方法、ページと URL の構成を決める
-2. MkDocs の最小構成と「ホーム」を追加する
-3. 「登山部」の入口ページを追加する
-4. ローカルプレビューとビルドを確認する
-5. 公開方法を決め、必要なら CI/CD を追加する
+1. 「ホーム」と「登山部」に掲載する内容を決める
+2. サイト固有の色やロゴなどのデザインを決める
+3. コンテンツを追加し、ローカルビルドで確認する
+4. 公開方法を決め、必要なら CI/CD を追加する
 
 この順序は提案であり、未決事項の合意に応じて更新します。
 

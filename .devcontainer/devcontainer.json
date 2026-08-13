@@ -1,0 +1,26 @@
+{
+  "name": "srusa-portal",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "MkDocs preview",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "python -m pip install --disable-pip-version-check -r requirements.txt",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  }
+}
