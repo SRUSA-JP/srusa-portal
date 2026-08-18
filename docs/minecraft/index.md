@@ -33,7 +33,7 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
 
 <div style="overflow-x: auto;">
   <iframe
-    src="viewer/index.html"
+    src="../apps/index.html"
     title="Minecraft サーバー統計ビューア"
     width="100%"
     height="820"
@@ -42,7 +42,7 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
   ></iframe>
 </div>
 
-[ビューアを単独で開く](viewer/index.html)
+[ビューアを単独で開く](../apps/index.html)
 
 ## データについての注意
 
@@ -55,6 +55,6 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
 | 項目 | 内容 |
 | --- | --- |
 | 実装 | React 19 + Recharts 3（TypeScript / Vite）。ソースは `viewer/` |
-| 配置 | `docs/minecraft/viewer/` にビルド済みの静的ファイルを配置 |
+| 配置 | `docs/apps/index.html`（相関図と共通のビルド成果物） |
 | データ | `data/minecraft-stats-20260818.json`（取得元のAWS情報とプレイヤーUUIDは伏字）をビルド時に取り込み |
 | 出典 | ビューアの実装と統計は `aws_minecraft` リポジトリ由来。以降はこのリポジトリで管理 |
