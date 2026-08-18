@@ -28,3 +28,6 @@ site/
 # Node（Minecraft 統計ビューア）
 viewer/node_modules/
 viewer/dist/
+
+# Claude Code のローカル設定とスキル
+.claude/
