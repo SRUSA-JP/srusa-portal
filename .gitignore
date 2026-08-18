@@ -24,3 +24,7 @@ site/
 .DS_Store
 .idea/
 .vscode/
+
+# Node（Minecraft 統計ビューア）
+viewer/node_modules/
+viewer/dist/

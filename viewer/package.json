@@ -1,0 +1,26 @@
+{
+  "name": "@srusa-portal/minecraft-stats-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minecraft サーバー統計ビューア（React + Recharts）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && npm run check:contrast && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check:contrast": "esbuild --bundle --format=esm --platform=node --log-level=error scripts/check-contrast.ts --outfile=node_modules/.cache/check-contrast.mjs && node node_modules/.cache/check-contrast.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.9"
+  }
+}
