@@ -34,6 +34,8 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [requirements.txt](requirements.txt): Python 依存関係と固定バージョン
 - [.python-version](.python-version): ローカル、GitHub Actions、Cloudflare Pages で使用する Python のバージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
+- [data/](data/): Minecraft サーバーの集計 JSON（ビューアのビルド時に取り込む）
+- [viewer/](viewer/): Minecraft 統計ビューアのソース（React + Recharts / Vite）
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
 - [.github/workflows/build-pr.yml](.github/workflows/build-pr.yml): Pull Request の手動ビルドと Preview 公開設定
 - [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml): GitHub Pages へのビルド・デプロイ設定
