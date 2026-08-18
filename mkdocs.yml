@@ -18,5 +18,6 @@ nav:
       - 登山部: mountaineering/index.md
       - 活動記録:
           - 大菩薩嶺（2026年7月4日）: mountaineering/活動記録/20260704.md
+  - Minecraft: minecraft/index.md
 
 strict: true

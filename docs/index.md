@@ -7,3 +7,4 @@ SRUSA の情報をまとめるポータルサイトです。
 ## コンテンツ
 
 - [登山部](mountaineering/index.md)
+- [Minecraft サーバー統計](minecraft/index.md)
