@@ -310,3 +310,54 @@ td.right {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* 相関図。横に長い図はカード内でスクロールさせる */
+.map-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.legend {
+  display: grid;
+  gap: 12px;
+}
+
+.legend-group {
+  display: grid;
+  gap: 6px;
+}
+
+.legend-title {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.legend-item.active {
+  border-color: var(--accent);
+}
+
+.legend-swatch {
+  display: inline-block;
+  border: 1px solid;
+  border-radius: 3px;
+}
+
+.legend-count {
+  color: var(--text-secondary);
+}

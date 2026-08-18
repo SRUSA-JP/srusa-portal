@@ -11,5 +11,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      /* 統計ビューアと相関図の 2 画面。共通コード（テーマなど）は自動で共有される */
+      input: {
+        main: 'index.html',
+        map: 'map.html',
+      },
+    },
   },
 });
