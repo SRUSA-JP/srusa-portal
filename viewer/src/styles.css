@@ -1,38 +1,12 @@
-/* ライト/ダーク両対応。色は data-viz の検証済みトークンに合わせている。 */
-:root {
-  --surface: #fcfcfb;
-  --surface-raised: #ffffff;
-  --border: #e6e4de;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --accent: #2a78d6;
-  --danger: #e34948;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --surface: #131312;
-    --surface-raised: #1a1a19;
-    --border: #333331;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --accent: #3987e5;
-    --danger: #e66767;
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --surface: #131312;
-  --surface-raised: #1a1a19;
-  --border: #333331;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --accent: #3987e5;
-  --danger: #e66767;
-  color-scheme: dark;
-}
+/**
+ * 画面のスタイル。
+ *
+ * 色・書体・余白・角丸・寸法の実値はこのファイルに書かない。
+ * すべて theme/cssVariables.ts が流し込むカスタムプロパティを参照する。
+ *   色     → theme/palette.ts
+ *   その他 → theme/tokens.ts
+ * 値を変えたくなったら、変えるのは上の 2 ファイルのどちらか。
+ */
 
 * {
   box-sizing: border-box;
@@ -40,108 +14,115 @@
 
 body {
   margin: 0;
-  background: var(--surface);
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 }
 
 .app {
-  max-width: 1180px;
+  max-width: var(--layout-max-width);
   margin: 0 auto;
-  padding: 24px 20px 64px;
+  padding: var(--space-xxxl) var(--space-xxl) var(--space-page);
 }
 
 .app-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-lg);
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-xl);
 }
 
 h1 {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   margin: 0;
 }
 
 h3 {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   margin: 0;
 }
 
 .note {
-  margin: 2px 0 0;
-  color: var(--text-secondary);
-  font-size: 12px;
+  margin: var(--space-xxs) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .error {
-  color: var(--danger);
-  border: 1px solid currentColor;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
+  color: var(--color-danger);
+  border: var(--border-hairline) solid currentColor;
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-md);
 }
 
 .app-actions,
 .card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-md);
   align-items: center;
 }
 
 button,
 select {
   font: inherit;
-  color: var(--text-primary);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 5px 10px;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
   cursor: pointer;
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: var(--effect-disabled-opacity);
   cursor: default;
 }
 
 button.ghost:hover:not(:disabled),
 select:hover {
-  border-color: var(--accent);
+  border-color: var(--color-accent);
+}
+
+button:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--border-thick) solid var(--color-accent);
+  outline-offset: var(--border-hairline);
 }
 
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin: 16px 0 20px;
+  gap: var(--space-xs);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  margin: var(--space-xl) 0 var(--space-xxl);
 }
 
 .tabs button {
   border: none;
   background: none;
   border-radius: 0;
-  border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
-  padding: 8px 14px;
+  border-bottom: var(--border-thick) solid transparent;
+  color: var(--color-text-secondary);
+  padding: var(--space-md) var(--space-lg);
 }
 
 .tabs button.active {
-  color: var(--text-primary);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
 }
 
 .segmented {
   display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -149,63 +130,63 @@ select:hover {
   border: none;
   border-radius: 0;
   background: none;
-  color: var(--text-secondary);
-  padding: 4px 10px;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) var(--space-lg);
 }
 
 .segmented button.active {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--layout-tile-min-width), 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xxl);
 }
 
 .kpi {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
+  gap: var(--space-xxs);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
 }
 
 .kpi-label {
-  color: var(--text-secondary);
-  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .kpi-value {
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 .kpi-sub {
-  color: var(--text-secondary);
-  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .card {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xxl);
 }
 
 .card-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-lg);
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-lg);
 }
 
 .card-body {
@@ -215,50 +196,50 @@ select:hover {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: 0 20px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--layout-column-min-width), 1fr));
+  gap: 0 var(--space-xxl);
 }
 
 .player-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-md);
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-xl);
 }
 
 .table-actions {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-md);
 }
 
 .table-scroll {
   overflow-x: auto;
-  max-height: 520px;
+  max-height: var(--layout-table-max-height);
   overflow-y: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-variant-numeric: tabular-nums;
 }
 
 th,
 td {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-sm) var(--space-lg);
+  border-bottom: var(--border-hairline) solid var(--color-border);
   white-space: nowrap;
 }
 
 th {
   position: sticky;
   top: 0;
-  background: var(--surface-raised);
-  color: var(--text-secondary);
-  font-weight: 600;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
 }
@@ -276,39 +257,39 @@ td.right {
 .app-foot {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
+  gap: var(--space-xxs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  border-top: var(--border-hairline) solid var(--color-border);
+  padding-top: var(--space-lg);
 }
 
 .recharts-surface {
   overflow: visible;
 }
 
-/* 絞り込みの数値入力。色は既存のトークンをそのまま使う */
+/* 絞り込みの数値入力 */
 .field {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: var(--space-sm);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
 }
 
 .field input[type='number'] {
   font: inherit;
-  width: 7em;
-  color: var(--text-primary);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 5px 8px;
+  width: var(--layout-number-input-width);
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
 }
 
 .field input[type='number']:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: var(--border-thick) solid var(--color-accent);
+  outline-offset: var(--border-hairline);
 }
 
 /* 相関図。横に長い図はカード内でスクロールさせる */
@@ -319,45 +300,45 @@ td.right {
 
 .legend {
   display: grid;
-  gap: 12px;
+  gap: var(--space-lg);
 }
 
 .legend-group {
   display: grid;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .legend-title {
-  color: var(--text-secondary);
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 .legend-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 4px 10px;
+  gap: var(--space-sm);
+  background: var(--color-surface-raised);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-lg);
 }
 
 .legend-item.active {
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .legend-swatch {
   display: inline-block;
-  border: 1px solid;
-  border-radius: 3px;
+  border: var(--border-hairline) solid;
+  border-radius: var(--radius-sm);
 }
 
 .legend-count {
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
