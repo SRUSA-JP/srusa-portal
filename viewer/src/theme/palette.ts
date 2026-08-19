@@ -7,11 +7,30 @@
  */
 export type ThemeMode = 'light' | 'dark';
 
+/**
+ * 画面で使う色の全て。
+ *
+ * グラフだけでなく、ページ背景・カード・枠線・ボタンの色もここが持つ。
+ * CSS 側は theme/cssVariables.ts が流し込むカスタムプロパティを参照するだけで、
+ * 色の定義を持たない。
+ */
 export interface VizTheme {
   mode: ThemeMode;
+  /** ページの地の色。 */
+  background: string;
+  /** カード・グラフの下地。文字色のコントラストはこの面を基準に判定する。 */
   surface: string;
+  /** ボタンや入力欄の面。 */
+  surfaceRaised: string;
+  /** 枠線・区切り線。 */
+  border: string;
   textPrimary: string;
   textSecondary: string;
+  /** 選択状態・強調に使う色。 */
+  accent: string;
+  /** エラー表示。 */
+  danger: string;
+  /** グラフの目盛り線。 */
   grid: string;
   /** カテゴリ系列の色。順番に使う（9 色目は作らず「その他」に畳む）。 */
   categorical: string[];
@@ -19,18 +38,28 @@ export interface VizTheme {
 
 export const LIGHT_THEME: VizTheme = {
   mode: 'light',
-  surface: '#fcfcfb',
+  background: '#fcfcfb',
+  surface: '#ffffff',
+  surfaceRaised: '#ffffff',
+  border: '#e6e4de',
   textPrimary: '#0b0b0b',
   textSecondary: '#52514e',
+  accent: '#2a78d6',
+  danger: '#c8322f',
   grid: '#e6e4de',
   categorical: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
 };
 
 export const DARK_THEME: VizTheme = {
   mode: 'dark',
+  background: '#131312',
   surface: '#1a1a19',
+  surfaceRaised: '#222221',
+  border: '#333331',
   textPrimary: '#ffffff',
   textSecondary: '#c3c2b7',
+  accent: '#3987e5',
+  danger: '#e66767',
   grid: '#333331',
   categorical: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'],
 };
