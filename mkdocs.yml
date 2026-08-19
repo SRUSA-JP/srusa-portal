@@ -7,6 +7,18 @@ theme:
   features:
     - navigation.tabs
     - navigation.tabs.sticky
+  # 初回は閲覧環境の設定に従い、右上のボタンで切り替えられる
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: ナイトモードに切り替える
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: ライトモードに切り替える
 
 plugins:
   - search:
