@@ -25,15 +25,8 @@ SRUSA のメンバー同士のつながりと、所属（学校・研究室・�
 
 ## 相関図
 
-<div style="overflow-x: auto;">
-  <iframe
-    src="../apps/map.html"
-    title="SRUSA 相関図"
-    width="100%"
-    height="900"
-    loading="lazy"
-    style="border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px;"
-  ></iframe>
+<div class="app-embed app-embed--tall">
+  <iframe src="../apps/map.html" title="SRUSA 相関図" loading="lazy"></iframe>
 </div>
 
 [相関図を単独で開く](../apps/map.html)

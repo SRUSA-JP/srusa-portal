@@ -20,6 +20,9 @@ theme:
         icon: material/weather-sunny
         name: ライトモードに切り替える
 
+extra_css:
+  - stylesheets/portal.css
+
 plugins:
   - search:
       lang: ja

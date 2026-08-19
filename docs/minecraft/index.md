@@ -31,15 +31,8 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
 
 ## ビューア
 
-<div style="overflow-x: auto;">
-  <iframe
-    src="../apps/index.html"
-    title="Minecraft サーバー統計ビューア"
-    width="100%"
-    height="820"
-    loading="lazy"
-    style="border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px;"
-  ></iframe>
+<div class="app-embed">
+  <iframe src="../apps/index.html" title="Minecraft サーバー統計ビューア" loading="lazy"></iframe>
 </div>
 
 [ビューアを単独で開く](../apps/index.html)

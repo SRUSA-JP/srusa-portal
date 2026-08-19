@@ -1,0 +1,43 @@
+/**
+ * ポータル側の追加スタイル。
+ *
+ * 寸法はこのファイル冒頭の変数だけを編集すれば全ページに反映される。
+ * 色は Material for MkDocs のテーマ変数（--md-*）を参照し、
+ * ライト／ダークの切り替えに自動で追随させる。実際の色コードは書かない。
+ */
+
+:root {
+  /* 埋め込むアプリの高さ */
+  --portal-embed-height: 820px;
+  --portal-embed-height-tall: 900px;
+  --portal-embed-radius: 4px;
+  --portal-embed-border-width: 1px;
+}
+
+/* 幅・高さを指定して埋め込むもの（外部サービスの地図など） */
+.embed-scroll {
+  overflow-x: auto;
+}
+
+.embed-scroll iframe {
+  border: 0;
+  max-width: 100%;
+}
+
+/* このリポジトリのアプリを埋め込む枠 */
+.app-embed {
+  overflow-x: auto;
+}
+
+.app-embed iframe {
+  display: block;
+  width: 100%;
+  height: var(--portal-embed-height);
+  border: var(--portal-embed-border-width) solid var(--md-default-fg-color--lightest);
+  border-radius: var(--portal-embed-radius);
+  background: var(--md-default-bg-color);
+}
+
+.app-embed--tall iframe {
+  height: var(--portal-embed-height-tall);
+}
