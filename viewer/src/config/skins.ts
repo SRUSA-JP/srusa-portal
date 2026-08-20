@@ -10,6 +10,10 @@
  * 指定が無ければ `DEFAULT_SKIN`。埋め込み側（Markdown）の 1 行を
  * 書き換えるだけで切り替えられる。
  *
+ * ページ側（MkDocs のヘッダー・本文）の見た目もここが決める。
+ * `npm run build:skins` がこの定義から docs/stylesheets/skins.css を
+ * 作るので、書体や色を 2 か所に書く必要はない。
+ *
  * 色そのものと配色の検証は theme/palette.ts、部品への割り当ては
  * config/colors.ts。ここは「既定から何を差し替えるか」だけを持つ。
  */
@@ -47,9 +51,15 @@ export interface Skin {
   borderScale: number;
   /**
    * 強調に使う色。既定の配色を上書きする。
+   * アプリでは選択・フォーカスの色、ページ側ではヘッダーとリンクの色になる。
    * 明るい配色・暗い配色それぞれに指定する。
    */
   accent?: { light: string; dark: string };
+  /**
+   * 地の色。既定の配色を上書きする。
+   * アプリとページで同じ色を使うので、記事とグラフが地続きに見える。
+   */
+  background?: { light: string; dark: string };
   /**
    * 単一系列のグラフと強調表示に使う色スロット。
    * 既定（0 番）以外にすると、検証済みの配色の中から色を選び直せる。
@@ -143,6 +153,7 @@ export function skinnedFontSize(size: number): number {
 /** スキンの色をテーマに反映する。差し替えが無ければそのまま返す。 */
 export function applySkin(theme: VizTheme, skin: Skin): VizTheme {
   const accent = skin.accent?.[theme.mode];
+  const background = skin.background?.[theme.mode];
   const categorical = [...theme.categorical];
 
   /* 単一系列と強調に使う色を先頭へ入れ替える（色は増やさず、検証済みの中から選ぶ） */
@@ -154,6 +165,9 @@ export function applySkin(theme: VizTheme, skin: Skin): VizTheme {
   return {
     ...theme,
     accent: accent ?? theme.accent,
+    /* 面も地に合わせる。グラフの下地と記事の地の色を同じにするため */
+    background: background ?? theme.background,
+    surface: background ?? theme.surface,
     categorical,
   };
 }

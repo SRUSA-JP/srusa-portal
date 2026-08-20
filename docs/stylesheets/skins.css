@@ -1,0 +1,32 @@
+/**
+ * ページ単位の見た目（スキン）。
+ *
+ * このファイルは viewer/src/config/skins.ts から作られる生成物です。
+ * 直接編集せず、`npm run build:skins` で作り直してください。
+ *
+ * ここで決めた変数は docs/stylesheets/portal.css が Material のテーマ変数へ
+ * 流し込みます。どのページがどのスキンかは Markdown の `?skin=` が決めます。
+ */
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+/* ドット絵風: Minecraft のページ用。ドット書体・直角・太い線・緑のテーマ色。 */
+[data-portal-skin='minecraft'] {
+  --md-text-font-family: 'DotGothic16', 'Hiragino Sans', 'Noto Sans JP', monospace;
+}
+
+[data-portal-skin='minecraft'] img {
+  image-rendering: pixelated;
+}
+
+[data-portal-skin='minecraft'][data-md-color-scheme='default'] {
+  --portal-header: #2e7d32;
+  --portal-link: #2e7d32;
+  --portal-accent: #2e7d32;
+}
+
+[data-portal-skin='minecraft'][data-md-color-scheme='slate'] {
+  --portal-header: #6abf69;
+  --portal-link: #6abf69;
+  --portal-accent: #6abf69;
+}
+
