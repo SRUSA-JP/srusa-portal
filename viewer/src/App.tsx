@@ -1,17 +1,44 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listDatasets, loadAllDatasets, loadDataset } from './data/datasets';
 import { checkTotals, parseStatsJson } from './data/parse';
-import type { ItemMetric, StatsDocument } from './data/schema';
+import type { StatsDocument } from './data/schema';
 import {
   ChartCard,
   KpiGrid,
   KpiTile,
   MetricScatter,
+  Picker,
   RankBarChart,
   SeriesBarChart,
   TrendLineChart,
 } from './components';
-import type { Column } from './components';
+import {
+  BASIS_OPTIONS,
+  BREAKDOWNS,
+  LIMITS,
+  METRICS,
+  PLAYER_COLUMN,
+  SERIES_OPTIONS,
+  STATS_TEXT,
+  TREND_SCOPE_OPTIONS,
+  type BreakdownId,
+  type SeriesId,
+  type TrendScope,
+} from './config';
+import {
+  basisLabel,
+  basisNote,
+  breakdownChartHeight,
+  breakdownOption,
+  joinNotes,
+  keepRatable,
+  metricColumnLabel,
+  metricOption,
+  metricsFor,
+  rankingChartHeight,
+  seriesOption,
+  unitFor,
+} from './lib/display';
 import {
   damageSeries,
   deathCauseRanking,
@@ -36,152 +63,8 @@ import {
   type Snapshot,
 } from './lib/selectors';
 import { downloadJson, type Row } from './lib/export';
-import { formatDecimal, formatHours, formatInt } from './lib/format';
+import { formatDecimal, formatHours } from './lib/format';
 import { useVizTheme } from './theme/useThemeMode';
-
-/** プレイヤー単位で比較できる指標。ランキングと散布図の選択肢になる。 */
-interface MetricOption {
-  value: NumericPlayerRowKey;
-  label: string;
-  unit: string;
-  /** 1時間あたりへの換算に意味があるか（既に時間あたりの指標は false）。 */
-  ratable: boolean;
-}
-
-const METRICS: MetricOption[] = [
-  { value: 'playtime_hours', label: 'プレイ時間', unit: ' h' , ratable: false },
-  { value: 'distance_km', label: '移動距離', unit: ' km' , ratable: true },
-  { value: 'deaths', label: '死亡回数', unit: ' 回' , ratable: true },
-  { value: 'deaths_per_hour', label: '死亡回数（1時間あたり）', unit: ' 回/h' , ratable: false },
-  { value: 'mob_kills', label: 'mob 撃破数', unit: ' 体' , ratable: true },
-  { value: 'mob_kills_per_hour', label: 'mob 撃破数（1時間あたり）', unit: ' 体/h' , ratable: false },
-  { value: 'player_kills', label: 'プレイヤー撃破数', unit: ' 人' , ratable: true },
-  { value: 'damage_dealt_hp', label: '与ダメージ', unit: ' HP' , ratable: true },
-  { value: 'damage_taken_hp', label: '被ダメージ', unit: ' HP' , ratable: true },
-  { value: 'blocks_mined', label: '採掘したブロック', unit: ' 個' , ratable: true },
-  { value: 'items_crafted', label: 'クラフトしたアイテム', unit: ' 個' , ratable: true },
-  { value: 'items_used', label: '使用したアイテム', unit: ' 個' , ratable: true },
-  { value: 'items_picked_up', label: '拾得したアイテム', unit: ' 個' , ratable: true },
-  { value: 'items_dropped', label: '捨てた・落としたアイテム', unit: ' 個' , ratable: true },
-  { value: 'tools_broken', label: '壊れた道具', unit: ' 本' , ratable: true },
-  { value: 'jumps', label: 'ジャンプ回数', unit: ' 回' , ratable: true },
-  { value: 'advancements', label: '進捗の達成数', unit: ' 件' , ratable: true },
-  { value: 'recipes_unlocked', label: '解放したレシピ数', unit: ' 件' , ratable: true },
-  { value: 'chests_opened', label: 'チェストを開けた回数', unit: ' 回' , ratable: true },
-  { value: 'villager_trades', label: '村人との取引回数', unit: ' 回' , ratable: true },
-];
-
-/** 値の見せ方。すべてのグラフで同じ選択肢を使う。 */
-const BASIS_OPTIONS: Array<{ value: RateBasis; label: string; suffix: string }> = [
-  { value: 'total', label: '実数', suffix: '' },
-  { value: 'per_playtime_hour', label: '1時間あたり', suffix: '/h' },
-  { value: 'per_playtime_day', label: '1プレイ日あたり', suffix: '/日' },
-];
-
-/** 1時間あたり表示に切り替えたとき、換算できない指標から移す先。 */
-const FALLBACK_RATABLE_METRIC: NumericPlayerRowKey = 'mob_kills';
-
-/** 基準に応じた単位（例: ' 体' → ' 体/h'）。単位の組み立てはここだけで行う。 */
-function unitFor(unit: string, basis: RateBasis): string {
-  return `${unit}${BASIS_OPTIONS.find((option) => option.value === basis)?.suffix ?? ''}`;
-}
-
-/** 基準で選べる指標の一覧。 */
-function metricsFor(basis: RateBasis): MetricOption[] {
-  return basis === 'total' ? METRICS : METRICS.filter((metric) => metric.ratable);
-}
-
-/** 換算後の分母の説明。グラフの注記に使う。 */
-function basisNote(basis: RateBasis, subject: string): string {
-  switch (basis) {
-    case 'per_playtime_hour':
-      return `${subject}のプレイ時間で割った、1時間あたりの値です。`;
-    case 'per_playtime_day':
-      return `${subject}のプレイ時間を24時間で1日と数え、1日あたりに換算した値です。カレンダー上の経過日数ではありません。`;
-    default:
-      return '';
-  }
-}
-
-function isRatable(metric: NumericPlayerRowKey): boolean {
-  return METRICS.find((m) => m.value === metric)?.ratable ?? false;
-}
-
-/** 内訳グラフで選べる集計軸。`kind` が 'item' のものは production 配下の CountMap。 */
-type BreakdownId = 'kills' | 'death_causes' | ItemMetric;
-
-interface BreakdownOption {
-  value: BreakdownId;
-  label: string;
-  unit: string;
-  note: string;
-}
-
-const BREAKDOWNS: BreakdownOption[] = [
-  {
-    value: 'kills',
-    label: '倒した mob',
-    unit: ' 体',
-    note: '直接倒した分のみ。落下や溶岩による撃破は含まれません。',
-  },
-  {
-    value: 'death_causes',
-    label: '死因',
-    unit: ' 回',
-    note: 'mob 以外の死因は「環境ダメージほか」にまとめています。',
-  },
-  { value: 'mined', label: '採掘したブロック', unit: ' 個', note: '' },
-  { value: 'crafted', label: 'クラフトしたアイテム', unit: ' 個', note: '' },
-  { value: 'used', label: '使用したアイテム', unit: ' 個', note: '' },
-  { value: 'picked_up', label: '拾得したアイテム', unit: ' 個', note: '' },
-  { value: 'dropped', label: '捨てたアイテム', unit: ' 個', note: '' },
-  { value: 'broken', label: '壊れた道具', unit: ' 個', note: '' },
-];
-
-/** 複数系列グラフで選べる比較軸。 */
-type SeriesId = 'movement' | 'damage';
-
-const SERIES_OPTIONS: Array<{ value: SeriesId; label: string; unit: string; stacked: boolean; note: string }> = [
-  {
-    value: 'movement',
-    label: '移動手段の内訳',
-    unit: ' km',
-    stacked: true,
-    note: '上位5手段のみ色を割り当て、残りは「その他」に畳んでいます。',
-  },
-  {
-    value: 'damage',
-    label: '与ダメージと被ダメージ',
-    unit: ' HP',
-    stacked: false,
-    note: '',
-  },
-];
-
-/** グラフ上に置くプルダウン。 */
-function Picker<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: Array<{ value: T; label: string }>;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <select value={value} aria-label={label} onChange={(event) => onChange(event.target.value as T)}>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-const PLAYER_COLUMN: Column = { key: 'player', label: 'プレイヤー', align: 'left' };
 
 export function App() {
   const theme = useVizTheme();
@@ -210,34 +93,25 @@ export function App() {
   const [scatterBasis, setScatterBasis] = useState<RateBasis>('total');
   const [trendMetric, setTrendMetric] = useState<NumericPlayerRowKey>('playtime_hours');
   const [trendBasis, setTrendBasis] = useState<RateBasis>('total');
-  const [trendPerPlayer, setTrendPerPlayer] = useState<'total' | 'per_player'>('total');
+  const [trendScope, setTrendScope] = useState<TrendScope>('total');
   /** 日付ごとの推移に使う全スナップショット。 */
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
 
   const changeTrendBasis = useCallback((basis: RateBasis) => {
     setTrendBasis(basis);
-    setTrendMetric((metric) =>
-      basis !== 'total' && !isRatable(metric) ? FALLBACK_RATABLE_METRIC : metric,
-    );
+    setTrendMetric((metric) => keepRatable(metric, basis));
   }, []);
 
   /* 1時間あたりに切り替えたとき、換算できない指標を選んだままにしない */
-  const changeRankBasis = useCallback(
-    (basis: RateBasis) => {
-      setRankBasis(basis);
-      setRankMetric((metric) =>
-        basis !== 'total' && !isRatable(metric) ? FALLBACK_RATABLE_METRIC : metric,
-      );
-    },
-    [],
-  );
+  const changeRankBasis = useCallback((basis: RateBasis) => {
+    setRankBasis(basis);
+    setRankMetric((metric) => keepRatable(metric, basis));
+  }, []);
 
   const changeScatterBasis = useCallback((basis: RateBasis) => {
     setScatterBasis(basis);
-    const fix = (metric: NumericPlayerRowKey) =>
-      basis !== 'total' && !isRatable(metric) ? FALLBACK_RATABLE_METRIC : metric;
-    setScatterX(fix);
-    setScatterY(fix);
+    setScatterX((metric) => keepRatable(metric, basis));
+    setScatterY((metric) => keepRatable(metric, basis));
   }, []);
 
   useEffect(() => {
@@ -247,7 +121,7 @@ export function App() {
       .then((loaded) => {
         if (cancelled) return;
         setDoc(loaded);
-        setSourceLabel(`data/minecraft-stats-${datasetId}.json`);
+        setSourceLabel(STATS_TEXT.file.dataset(datasetId));
         setError(null);
       })
       .catch((cause: Error) => !cancelled && setError(cause.message));
@@ -273,7 +147,7 @@ export function App() {
     try {
       const loaded = parseStatsJson(await file.text());
       setDoc(loaded);
-      setSourceLabel(`${file.name}（読み込み）`);
+      setSourceLabel(STATS_TEXT.importedFile(file.name));
       setBreakdownPlayer('');
       setFilterBounds(null);
       setError(null);
@@ -291,7 +165,7 @@ export function App() {
   };
   const rows = useMemo(() => filterRows(allRows, filter), [allRows, filter.metric, filter.min, filter.max]);
   const playerNames = useMemo(() => rows.map((row) => row.name), [rows]);
-  const filterOption = METRICS.find((m) => m.value === filterMetric) ?? METRICS[0];
+  const filterOption = metricOption(filterMetric);
   const filtered = rows.length !== allRows.length;
   const mismatches = useMemo(() => (doc ? checkTotals(doc) : []), [doc]);
 
@@ -314,12 +188,12 @@ export function App() {
     [rows],
   );
 
-  const rankOption = METRICS.find((m) => m.value === rankMetric) ?? METRICS[0];
-  const scatterXOption = METRICS.find((m) => m.value === scatterX) ?? METRICS[0];
-  const scatterYOption = METRICS.find((m) => m.value === scatterY) ?? METRICS[0];
-  const trendMetricOption = METRICS.find((m) => m.value === trendMetric) ?? METRICS[0];
-  const breakdownOption = BREAKDOWNS.find((b) => b.value === breakdown) ?? BREAKDOWNS[0];
-  const seriesOption = SERIES_OPTIONS.find((s) => s.value === seriesId) ?? SERIES_OPTIONS[0];
+  const rankOption = metricOption(rankMetric);
+  const scatterXOption = metricOption(scatterX);
+  const scatterYOption = metricOption(scatterY);
+  const trendMetricOption = metricOption(trendMetric);
+  const currentBreakdown = breakdownOption(breakdown);
+  const currentSeries = seriesOption(seriesId);
 
   const rankData = useMemo(
     () => rankBy(rows, rankMetric, { basis: rankBasis }),
@@ -341,7 +215,7 @@ export function App() {
         : breakdown === 'death_causes'
           ? deathCauseRanking(doc, options)
           : itemRanking(doc, breakdown, options);
-    return toRateEntries(topWithOther(entries, 8), breakdownHours, breakdownBasis);
+    return toRateEntries(topWithOther(entries, LIMITS.breakdownItems), breakdownHours, breakdownBasis);
   }, [doc, breakdown, effectivePlayer, playerNames, breakdownHours, breakdownBasis]);
 
   const seriesData = useMemo(() => {
@@ -355,9 +229,9 @@ export function App() {
       metricTimeline(snapshots, trendMetric, {
         players: playerNames,
         basis: trendBasis,
-        perPlayer: trendPerPlayer === 'per_player',
+        perPlayer: trendScope === 'per_player',
       }),
-    [snapshots, trendMetric, playerNames, trendBasis, trendPerPlayer],
+    [snapshots, trendMetric, playerNames, trendBasis, trendScope],
   );
 
   const scatterPoints = useMemo(
@@ -369,11 +243,16 @@ export function App() {
     <div className="app">
       <header className="app-head">
         <div>
-          <h1>Minecraft サーバー統計</h1>
+          <h1>{STATS_TEXT.title}</h1>
           {doc && (
             <p className="note">
-              {doc.generated_on} 時点 / {doc.source.minecraft_version}・{doc.source.loader}・難易度{' '}
-              {doc.source.difficulty} / {sourceLabel}
+              {STATS_TEXT.source({
+                generatedOn: doc.generated_on,
+                version: doc.source.minecraft_version,
+                loader: doc.source.loader,
+                difficulty: doc.source.difficulty,
+                file: sourceLabel,
+              })}
             </p>
           )}
         </div>
@@ -382,7 +261,7 @@ export function App() {
             <select
               value={datasetId}
               onChange={(event) => setDatasetId(event.target.value)}
-              aria-label="データセット"
+              aria-label={STATS_TEXT.action.dataset}
             >
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
@@ -403,72 +282,66 @@ export function App() {
             }}
           />
           <button type="button" className="ghost" onClick={() => fileInput.current?.click()}>
-            JSON を読み込む
+            {STATS_TEXT.action.importJson}
           </button>
           <button
             type="button"
             className="ghost"
             disabled={!doc}
-            onClick={() => doc && downloadJson(`players-${doc.generated_on}.json`, playerRows(doc))}
+            onClick={() =>
+              doc && downloadJson(STATS_TEXT.file.summary(doc.generated_on), playerRows(doc))
+            }
           >
-            サマリを書き出す
+            {STATS_TEXT.action.exportSummary}
           </button>
         </div>
       </header>
 
-      {error && <p className="error">読み込みエラー: {error}</p>}
+      {error && <p className="error">{STATS_TEXT.error.load(error)}</p>}
       {mismatches.length > 0 && (
-        <p className="error">
-          totals とプレイヤー合計が一致しません: {mismatches.map((m) => m.field).join(', ')}
-        </p>
+        <p className="error">{STATS_TEXT.error.totalsMismatch(mismatches.map((m) => m.field))}</p>
       )}
 
       <main>
         {!doc && !error && datasets.length === 0 && (
-          <p className="note">
-            data/minecraft-stats-*.json が見つかりません。右上の「JSON を読み込む」からファイルを指定してください。
-          </p>
+          <p className="note">{STATS_TEXT.empty.noDataset}</p>
         )}
-        {!doc && !error && datasets.length > 0 && <p className="note">読み込み中…</p>}
+        {!doc && !error && datasets.length > 0 && <p className="note">{STATS_TEXT.empty.loading}</p>}
 
         {doc && (
           <>
             <section className="card">
               <header className="card-head">
                 <div>
-                  <h3>絞り込み</h3>
-                  <p className="note">
-                    {filtered
-                      ? `${formatInt(allRows.length)} 人中 ${formatInt(rows.length)} 人を表示しています。以降のグラフはすべてこの範囲で計算されます。`
-                      : `${formatInt(allRows.length)} 人すべてを表示しています。指標の範囲を狭めると全グラフに反映されます。`}
-                  </p>
+                  <h3>{STATS_TEXT.filter.title}</h3>
+                  <p className="note">{STATS_TEXT.filter.note(rows.length, allRows.length)}</p>
                 </div>
                 <div className="card-actions">
                   <Picker
-                    label="絞り込む指標"
+                    label={STATS_TEXT.filter.metricPicker}
                     value={filterMetric}
                     options={METRICS}
                     onChange={changeFilterMetric}
                   />
                   <label className="field">
-                    下限
+                    {STATS_TEXT.filter.min}
                     <input
                       type="number"
                       step="any"
                       value={filter.min}
-                      aria-label={`${filterOption.label}の下限`}
+                      aria-label={STATS_TEXT.filter.minLabel(filterOption.label)}
                       onChange={(event) =>
                         setFilterBounds({ min: Number(event.target.value), max: filter.max })
                       }
                     />
                   </label>
                   <label className="field">
-                    上限
+                    {STATS_TEXT.filter.max}
                     <input
                       type="number"
                       step="any"
                       value={filter.max}
-                      aria-label={`${filterOption.label}の上限`}
+                      aria-label={STATS_TEXT.filter.maxLabel(filterOption.label)}
                       onChange={(event) =>
                         setFilterBounds({ min: filter.min, max: Number(event.target.value) })
                       }
@@ -476,7 +349,7 @@ export function App() {
                   </label>
                   <span className="note">{filterOption.unit.trim()}</span>
                   <button type="button" className="ghost" disabled={!filtered} onClick={() => setFilterBounds(null)}>
-                    解除
+                    {STATS_TEXT.filter.clear}
                   </button>
                 </div>
               </header>
@@ -484,28 +357,31 @@ export function App() {
 
             <KpiGrid>
               <KpiTile
-                label="プレイヤー数"
-                value={`${formatInt(kpi.players)} 人`}
-                sub={filtered ? `全 ${formatInt(allRows.length)} 人中` : undefined}
+                label={STATS_TEXT.kpi.players}
+                value={STATS_TEXT.kpi.playersValue(kpi.players)}
+                sub={filtered ? STATS_TEXT.kpi.playersSub(allRows.length) : undefined}
               />
-              <KpiTile label="合計プレイ時間" value={formatHours(kpi.playtime)} />
-              <KpiTile label="合計移動距離" value={`${formatDecimal(kpi.distance)} km`} />
-              <KpiTile label="合計死亡回数" value={`${formatInt(kpi.deaths)} 回`} />
+              <KpiTile label={STATS_TEXT.kpi.playtime} value={formatHours(kpi.playtime)} />
+              <KpiTile
+                label={STATS_TEXT.kpi.distance}
+                value={`${formatDecimal(kpi.distance)}${metricOption('distance_km').unit}`}
+              />
+              <KpiTile label={STATS_TEXT.kpi.deaths} value={STATS_TEXT.kpi.deathsValue(kpi.deaths)} />
             </KpiGrid>
 
             <ChartCard
-              title="プレイヤー比較（横棒グラフ）"
-              note={basisNote(rankBasis, '各プレイヤー') || '選んだ指標でプレイヤーを降順に並べます。'}
+              title={STATS_TEXT.card.ranking.title}
+              note={basisNote(rankBasis, STATS_TEXT.basisNote.subject.each) || STATS_TEXT.card.ranking.note}
               actions={
                 <>
                   <Picker
-                    label="指標"
+                    label={STATS_TEXT.picker.metric}
                     value={rankMetric}
                     options={metricsFor(rankBasis)}
                     onChange={setRankMetric}
                   />
                   <Picker
-                    label="値の基準"
+                    label={STATS_TEXT.picker.basis}
                     value={rankBasis}
                     options={BASIS_OPTIONS}
                     onChange={changeRankBasis}
@@ -518,52 +394,52 @@ export function App() {
               }))}
               tableColumns={[
                 PLAYER_COLUMN,
-                { key: 'value', label: `${rankOption.label}${unitFor(rankOption.unit, rankBasis)}` },
+                { key: 'value', label: metricColumnLabel(rankMetric, rankBasis) },
               ]}
-              csvName={`ranking-${rankMetric}-${rankBasis}.csv`}
+              csvName={STATS_TEXT.file.ranking(rankMetric, rankBasis)}
             >
               {rankData.length > 0 ? (
                 <RankBarChart
                   data={rankData}
                   theme={theme}
                   unit={unitFor(rankOption.unit, rankBasis)}
-                  height={Math.max(280, rankData.length * 26)}
+                  height={rankingChartHeight(rankData.length)}
                 />
               ) : (
-                <p className="note">条件に合うプレイヤーがいません。</p>
+                <p className="note">{STATS_TEXT.empty.noPlayers}</p>
               )}
             </ChartCard>
 
             <ChartCard
-              title="内訳（横棒グラフ）"
-              note={[
-                '上位8件を表示し、残りは「その他」に畳んでいます。',
-                breakdownOption.note,
-                breakdownBasis === 'total'
-                  ? ''
-                  : `${basisNote(breakdownBasis, '対象')}（合計 ${formatDecimal(breakdownHours)} 時間）`,
-              ]
-                .filter(Boolean)
-                .join('')}
+              title={STATS_TEXT.card.breakdown.title}
+              note={joinNotes(
+                STATS_TEXT.card.breakdown.note(LIMITS.breakdownItems),
+                currentBreakdown.note,
+                breakdownBasis !== 'total' &&
+                  STATS_TEXT.card.breakdown.basisHours(
+                    basisNote(breakdownBasis, STATS_TEXT.basisNote.subject.target),
+                    formatDecimal(breakdownHours),
+                  ),
+              )}
               actions={
                 <>
                   <Picker
-                    label="集計対象"
+                    label={STATS_TEXT.picker.breakdown}
                     value={breakdown}
                     options={BREAKDOWNS}
                     onChange={setBreakdown}
                   />
                   <Picker
-                    label="プレイヤー"
+                    label={STATS_TEXT.picker.player}
                     value={effectivePlayer}
                     options={[
-                      { value: '', label: '対象全員の合計' },
+                      { value: '', label: STATS_TEXT.picker.allPlayers },
                       ...playerNames.map((name) => ({ value: name, label: name })),
                     ]}
                     onChange={setBreakdownPlayer}
                   />
                   <Picker
-                    label="値の基準"
+                    label={STATS_TEXT.picker.basis}
                     value={breakdownBasis}
                     options={BASIS_OPTIONS}
                     onChange={setBreakdownBasis}
@@ -575,42 +451,45 @@ export function App() {
                 value: entry.value,
               }))}
               tableColumns={[
-                { key: 'item', label: breakdownOption.label, align: 'left' },
+                { key: 'item', label: currentBreakdown.label, align: 'left' },
                 {
                   key: 'value',
                   label:
                     breakdownBasis === 'total'
-                      ? '件数'
-                      : (BASIS_OPTIONS.find((option) => option.value === breakdownBasis)?.label ?? '件数'),
+                      ? STATS_TEXT.card.breakdown.valueColumn
+                      : basisLabel(breakdownBasis),
                 },
               ]}
-              csvName={`breakdown-${breakdown}-${breakdownBasis}.csv`}
+              csvName={STATS_TEXT.file.breakdown(breakdown, breakdownBasis)}
             >
               {breakdownData.length > 0 ? (
                 <RankBarChart
                   data={breakdownData}
                   theme={theme}
-                  unit={unitFor(breakdownOption.unit, breakdownBasis)}
-                  height={Math.max(240, breakdownData.length * 32)}
+                  unit={unitFor(currentBreakdown.unit, breakdownBasis)}
+                  height={breakdownChartHeight(breakdownData.length)}
                 />
               ) : (
-                <p className="note">該当するデータがありません。</p>
+                <p className="note">{STATS_TEXT.empty.noBreakdown}</p>
               )}
             </ChartCard>
 
             <ChartCard
-              title="系列比較（積み上げ・グループ棒グラフ）"
-              note={[
-                seriesOption.note || 'プレイヤーごとに複数系列を比較します。',
-                basisNote(seriesBasis, '各プレイヤー'),
-              ]
-                .filter(Boolean)
-                .join('')}
+              title={STATS_TEXT.card.series.title}
+              note={joinNotes(
+                currentSeries.note || STATS_TEXT.card.series.note,
+                basisNote(seriesBasis, STATS_TEXT.basisNote.subject.each),
+              )}
               actions={
                 <>
-                  <Picker label="比較軸" value={seriesId} options={SERIES_OPTIONS} onChange={setSeriesId} />
                   <Picker
-                    label="値の基準"
+                    label={STATS_TEXT.picker.series}
+                    value={seriesId}
+                    options={SERIES_OPTIONS}
+                    onChange={setSeriesId}
+                  />
+                  <Picker
+                    label={STATS_TEXT.picker.basis}
                     value={seriesBasis}
                     options={BASIS_OPTIONS}
                     onChange={setSeriesBasis}
@@ -619,54 +498,47 @@ export function App() {
               }
               tableRows={seriesData.rows as Row[]}
               tableColumns={[
-                { key: 'name', label: 'プレイヤー', align: 'left' },
+                { key: 'name', label: PLAYER_COLUMN.label, align: 'left' },
                 ...seriesData.series.map((s) => ({ key: s.key, label: s.label })),
               ]}
-              csvName={`series-${seriesId}-${seriesBasis}.csv`}
+              csvName={STATS_TEXT.file.series(seriesId, seriesBasis)}
             >
               {seriesData.rows.length > 0 ? (
                 <SeriesBarChart
                   data={seriesData}
                   theme={theme}
-                  stacked={seriesOption.stacked}
-                  unit={unitFor(seriesOption.unit, seriesBasis)}
+                  stacked={currentSeries.stacked}
+                  unit={unitFor(currentSeries.unit, seriesBasis)}
                 />
               ) : (
-                <p className="note">条件に合うプレイヤーがいません。</p>
+                <p className="note">{STATS_TEXT.empty.noPlayers}</p>
               )}
             </ChartCard>
 
             <ChartCard
-              title="日付ごとの推移（折れ線グラフ）"
-              note={[
-                `${formatInt(snapshots.length)} 日分のスナップショットを日付順につないでいます。`,
-                snapshots.length < 2
-                  ? 'データが1日分しかないため、点が1つだけ表示されます。data/ に別の日付の minecraft-stats-YYYYMMDD.json を追加すると線になります。'
-                  : '',
-                trendPerPlayer === 'per_player' ? '最新日の上位8人までを表示します。' : '',
-                basisNote(trendBasis, '対象者'),
-              ]
-                .filter(Boolean)
-                .join('')}
+              title={STATS_TEXT.card.trend.title}
+              note={joinNotes(
+                STATS_TEXT.card.trend.note(snapshots.length),
+                snapshots.length < 2 && STATS_TEXT.card.trend.singleSnapshot,
+                trendScope === 'per_player' && STATS_TEXT.card.trend.perPlayer(LIMITS.trendPlayers),
+                basisNote(trendBasis, STATS_TEXT.basisNote.subject.audience),
+              )}
               actions={
                 <>
                   <Picker
-                    label="指標"
+                    label={STATS_TEXT.picker.metric}
                     value={trendMetric}
                     options={metricsFor(trendBasis)}
                     onChange={setTrendMetric}
                   />
                   <Picker
-                    label="表示単位"
-                    value={trendPerPlayer}
-                    options={[
-                      { value: 'total' as const, label: '対象者の合計' },
-                      { value: 'per_player' as const, label: 'プレイヤー別' },
-                    ]}
-                    onChange={setTrendPerPlayer}
+                    label={STATS_TEXT.picker.trendScope}
+                    value={trendScope}
+                    options={TREND_SCOPE_OPTIONS}
+                    onChange={setTrendScope}
                   />
                   <Picker
-                    label="値の基準"
+                    label={STATS_TEXT.picker.basis}
                     value={trendBasis}
                     options={BASIS_OPTIONS}
                     onChange={changeTrendBasis}
@@ -675,10 +547,10 @@ export function App() {
               }
               tableRows={trendData.rows as Row[]}
               tableColumns={[
-                { key: TIMELINE_CATEGORY_KEY, label: '日付', align: 'left' },
+                { key: TIMELINE_CATEGORY_KEY, label: STATS_TEXT.card.trend.dateColumn, align: 'left' },
                 ...trendData.series.map((series) => ({ key: series.key, label: series.label })),
               ]}
-              csvName={`trend-${trendMetric}-${trendBasis}.csv`}
+              csvName={STATS_TEXT.file.trend(trendMetric, trendBasis)}
             >
               {trendData.rows.length > 0 ? (
                 <TrendLineChart
@@ -688,33 +560,35 @@ export function App() {
                   unit={unitFor(trendMetricOption.unit, trendBasis)}
                 />
               ) : (
-                <p className="note">表示できるスナップショットがありません。</p>
+                <p className="note">{STATS_TEXT.empty.noSnapshots}</p>
               )}
             </ChartCard>
 
             <ChartCard
-              title="2指標の関係（散布図）"
+              title={STATS_TEXT.card.scatter.title}
               note={
                 scatterBasis === 'total'
-                  ? '横軸・縦軸の指標をそれぞれ選べます。同じ指標を選ぶと対角線になります。'
-                  : `両軸とも${basisNote(scatterBasis, '各プレイヤー')}`
+                  ? STATS_TEXT.card.scatter.note
+                  : STATS_TEXT.card.scatter.bothAxes(
+                      basisNote(scatterBasis, STATS_TEXT.basisNote.subject.each),
+                    )
               }
               actions={
                 <>
                   <Picker
-                    label="横軸"
+                    label={STATS_TEXT.picker.xAxis}
                     value={scatterX}
                     options={metricsFor(scatterBasis)}
                     onChange={setScatterX}
                   />
                   <Picker
-                    label="縦軸"
+                    label={STATS_TEXT.picker.yAxis}
                     value={scatterY}
                     options={metricsFor(scatterBasis)}
                     onChange={setScatterY}
                   />
                   <Picker
-                    label="値の基準"
+                    label={STATS_TEXT.picker.basis}
                     value={scatterBasis}
                     options={BASIS_OPTIONS}
                     onChange={changeScatterBasis}
@@ -728,12 +602,12 @@ export function App() {
               }))}
               tableColumns={[
                 PLAYER_COLUMN,
-                { key: 'x', label: `${scatterXOption.label}${unitFor(scatterXOption.unit, scatterBasis)}` },
-                { key: 'y', label: `${scatterYOption.label}${unitFor(scatterYOption.unit, scatterBasis)}` },
+                { key: 'x', label: metricColumnLabel(scatterX, scatterBasis) },
+                { key: 'y', label: metricColumnLabel(scatterY, scatterBasis) },
               ]}
-              csvName={`scatter-${scatterX}-${scatterY}-${scatterBasis}.csv`}
+              csvName={STATS_TEXT.file.scatter(scatterX, scatterY, scatterBasis)}
             >
-              {scatterPoints.length === 0 && <p className="note">条件に合うプレイヤーがいません。</p>}
+              {scatterPoints.length === 0 && <p className="note">{STATS_TEXT.empty.noPlayers}</p>}
               <MetricScatter
                 points={scatterPoints}
                 theme={theme}
@@ -750,7 +624,11 @@ export function App() {
       {doc && (
         <footer className="app-foot">
           <span>
-            取得元: {doc.source.path}（{doc.source.retrieved_via} / {doc.source.instance_id}）
+            {STATS_TEXT.footer.source(
+              doc.source.path,
+              doc.source.retrieved_via,
+              doc.source.instance_id,
+            )}
           </span>
           <span>{doc.units.playtime}</span>
         </footer>
