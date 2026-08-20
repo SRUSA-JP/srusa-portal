@@ -102,6 +102,8 @@ export const MINECRAFT_SKIN: Skin = {
   borderScale: 2,
   /* 草の緑。明るい配色では濃く、暗い配色では明るくして読めるようにする */
   accent: { light: '#2e7d32', dark: '#6abf69' },
+  /* 地は緑を薄く敷く。文字とのコントラストは check:contrast で検査する */
+  background: { light: '#f1f7ec', dark: '#141a12' },
   /* 検証済みの配色の中の緑を、単一系列のグラフと強調に使う */
   primarySlot: 5,
   crispEdges: true,

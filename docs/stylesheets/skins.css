@@ -22,11 +22,13 @@
   --portal-header: #2e7d32;
   --portal-link: #2e7d32;
   --portal-accent: #2e7d32;
+  --portal-page-background: #f1f7ec;
 }
 
 [data-portal-skin='minecraft'][data-md-color-scheme='slate'] {
   --portal-header: #6abf69;
   --portal-link: #6abf69;
   --portal-accent: #6abf69;
+  --portal-page-background: #141a12;
 }
 
