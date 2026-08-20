@@ -6,7 +6,15 @@
  */
 import type { CountMap, ItemMetric, NamedPlayer, StatsDocument } from '../data/schema';
 import { toNamedPlayers } from '../data/parse';
-import { MOVEMENT_LABELS, labelFor, prettifyId } from './format';
+import { LIMITS } from '../config/metrics';
+import {
+  DAMAGE_LABELS,
+  ENVIRONMENT_ENTRY,
+  MOVEMENT_LABELS,
+  OTHER_ENTRY,
+  TOTAL_SERIES,
+} from '../config/labels';
+import { labelFor, prettifyId } from './format';
 
 /** チャート・表で使う汎用の 1 行。 */
 export interface Entry {
@@ -212,11 +220,15 @@ export function toEntries(map: CountMap, label: (key: string) => string = pretti
 }
 
 /** 上位 n 件 + 「その他」にまとめる（カテゴリ色を 8 色以内に保つため）。 */
-export function topWithOther(entries: Entry[], n: number, otherLabel = 'その他'): Entry[] {
+export function topWithOther(
+  entries: Entry[],
+  n: number = LIMITS.breakdownItems,
+  otherLabel: string = OTHER_ENTRY.label,
+): Entry[] {
   if (entries.length <= n) return entries;
   const head = entries.slice(0, n);
   const rest = entries.slice(n).reduce((acc, e) => acc + e.value, 0);
-  return rest > 0 ? [...head, { key: '__other__', label: otherLabel, value: rest }] : head;
+  return rest > 0 ? [...head, { key: OTHER_ENTRY.key, label: otherLabel, value: rest }] : head;
 }
 
 /** アイテム系メトリクス（採掘・クラフト等）の合算ランキング。player 指定で個人分のみ。 */
@@ -242,7 +254,7 @@ export function deathCauseRanking(doc: StatsDocument, options: { players?: strin
   const players = includedPlayers(doc, options.players);
   const entries = toEntries(mergeCounts(players.map((p) => p.deaths.by_mob)));
   const other = players.reduce((acc, p) => acc + p.deaths.other_causes, 0);
-  return other > 0 ? [...entries, { key: '__environment__', label: '環境ダメージほか', value: other }] : entries;
+  return other > 0 ? [...entries, { ...ENVIRONMENT_ENTRY, value: other }] : entries;
 }
 
 /** 積み上げ棒グラフ用: プレイヤー × 移動手段（km）。 */
@@ -253,7 +265,10 @@ export interface StackedSeries {
   rows: Array<Record<string, string | number>>;
 }
 
-export function movementStacked(doc: StatsDocument, topMethods = 5): StackedSeries {
+export function movementStacked(
+  doc: StatsDocument,
+  topMethods: number = LIMITS.movementMethods,
+): StackedSeries {
   const players = toNamedPlayers(doc);
   const totals = toEntries(mergeCounts(players.map((p) => p.movement.by_method_km)), (key) =>
     labelFor(key, MOVEMENT_LABELS),
@@ -270,12 +285,12 @@ export function movementStacked(doc: StatsDocument, topMethods = 5): StackedSeri
       else other += km;
     }
     for (const entry of kept) if (row[entry.key] === undefined) row[entry.key] = 0;
-    if (hasOther) row.__other__ = round(other, 2);
+    if (hasOther) row[OTHER_ENTRY.key] = round(other, 2);
     return row;
   });
 
   const series = kept.map((e) => ({ key: e.key, label: e.label }));
-  if (hasOther) series.push({ key: '__other__', label: 'その他' });
+  if (hasOther) series.push({ key: OTHER_ENTRY.key, label: OTHER_ENTRY.label });
   return { series, rows };
 }
 
@@ -283,8 +298,8 @@ export function movementStacked(doc: StatsDocument, topMethods = 5): StackedSeri
 export function damageSeries(doc: StatsDocument): StackedSeries {
   return {
     series: [
-      { key: 'damage_dealt_hp', label: '与ダメージ' },
-      { key: 'damage_taken_hp', label: '被ダメージ' },
+      { key: 'damage_dealt_hp', label: DAMAGE_LABELS.dealt },
+      { key: 'damage_taken_hp', label: DAMAGE_LABELS.taken },
     ],
     rows: playerRows(doc).map((row) => ({
       name: row.name,
@@ -348,7 +363,7 @@ export function metricTimeline(
   options: { players?: string[]; basis?: RateBasis; perPlayer?: boolean; limit?: number } = {},
 ): StackedSeries {
   const basis = options.basis ?? 'total';
-  const limit = options.limit ?? 8;
+  const limit = options.limit ?? LIMITS.trendPlayers;
   const perSnapshot = snapshots.map((snapshot) => ({
     label: snapshot.label,
     rows: includedRows(playerRows(snapshot.doc), options.players),
@@ -363,7 +378,7 @@ export function metricTimeline(
         total: basis === 'total' ? value : perUnit(value, basisDivisor(hours, basis)),
       };
     });
-    return { series: [{ key: 'total', label: '対象者の合計' }], rows };
+    return { series: [{ ...TOTAL_SERIES }], rows };
   }
 
   /* 最新スナップショットの大きい順に色スロットを割り当てる */
