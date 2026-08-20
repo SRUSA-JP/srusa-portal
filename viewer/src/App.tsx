@@ -243,7 +243,7 @@ export function App() {
     <div className="app">
       <header className="app-head">
         <div>
-          <h1>{STATS_TEXT.title}</h1>
+          <h1 className="app-title">{STATS_TEXT.title}</h1>
           {doc && (
             <p className="note">
               {STATS_TEXT.source({
@@ -313,7 +313,7 @@ export function App() {
             <section className="card">
               <header className="card-head">
                 <div>
-                  <h3>{STATS_TEXT.filter.title}</h3>
+                  <h2>{STATS_TEXT.filter.title}</h2>
                   <p className="note">{STATS_TEXT.filter.note(rows.length, allRows.length)}</p>
                 </div>
                 <div className="card-actions">

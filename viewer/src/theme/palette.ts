@@ -129,6 +129,26 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+const RGB_PATTERN = /^rgba?\(([^)]+)\)$/i;
+
+/**
+ * ブラウザが返す色（`rgb(...)` / `rgba(...)` / `#rrggbb`）を hex に直す。
+ *
+ * 埋め込み先の地の色を読むときに使う。解釈できない場合と、透明で
+ * 「色が無い」場合は null を返し、呼び出し側が既定の配色へ落とす。
+ */
+export function parseCssColor(value: string): string | null {
+  const text = value.trim();
+  if (HEX_PATTERN.test(text)) return toHex(parseHex(text));
+
+  const matched = RGB_PATTERN.exec(text);
+  if (!matched) return null;
+  const parts = matched[1].split(/[,/\s]+/).filter(Boolean).map(Number);
+  if (parts.length < 3 || parts.slice(0, 3).some(Number.isNaN)) return null;
+  if (parts.length >= 4 && parts[3] === 0) return null;
+  return toHex(parts.slice(0, 3) as Rgb);
+}
+
 /** WCAG 2.1 の相対輝度（0 = 黒、1 = 白）。 */
 export function relativeLuminance(color: string): number {
   const [r, g, b] = parseHex(color).map((channel) => {

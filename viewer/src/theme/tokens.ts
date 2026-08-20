@@ -67,6 +67,8 @@ export const SPACE = {
   xl: 16,
   xxl: 20,
   xxxl: 24,
+  /** 記事の節と節の間。 */
+  section: 40,
   page: 64,
 } as const;
 

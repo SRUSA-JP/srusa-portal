@@ -63,7 +63,7 @@ export function MapApp() {
     <div className="app">
       <header className="app-head">
         <div>
-          <h1>{data.project.name}</h1>
+          <h1 className="app-title">{data.project.name}</h1>
           <p className="note">
             {MAP_TEXT.summary(
               data.people.length,

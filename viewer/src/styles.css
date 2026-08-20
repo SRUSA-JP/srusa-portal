@@ -12,6 +12,49 @@
   box-sizing: border-box;
 }
 
+/*
+ * 記事に埋め込まれたとき（embed/index.ts が data-embedded を立てる）。
+ *
+ * ページの地の色・幅・余白はすべて埋め込み先に任せ、ここでは何も塗らない。
+ * 自前の背景を塗ると、記事の中でその部分だけ色の違う四角に見えてしまう。
+ */
+:root[data-embedded='true'] body {
+  background: transparent;
+}
+
+/*
+ * 埋め込み先が高さを合わせてくれたら（embed/index.ts が data-height-managed を
+ * 立てる）、この中はスクロールしない。スクロールバーを許すと「バーが出る →
+ * 幅が縮む → グラフを描き直す → 高さが変わる → バーが消える」を繰り返して
+ * 画面が揺れる。返事が来るまではスクロールできるままにして、中身が
+ * 切れないようにしておく。
+ */
+:root[data-height-managed='true'],
+:root[data-height-managed='true'] body {
+  overflow: hidden;
+}
+
+:root[data-embedded='true'] .app {
+  max-width: none;
+  padding: 0;
+}
+
+/* ページ側に見出しがあるので、アプリの見出しは出さない */
+:root[data-embedded='true'] .app-title {
+  display: none;
+}
+
+/* 記事の中では表も最後まで流す（枠の中でスクロールさせない） */
+:root[data-embedded='true'] .table-scroll {
+  max-height: none;
+}
+
+/* 縦スクロールしないので、見出し行を貼り付ける必要も無い */
+:root[data-embedded='true'] th {
+  position: static;
+  background: transparent;
+}
+
 body {
   margin: 0;
   background: var(--color-background);
@@ -36,13 +79,9 @@ body {
   margin-bottom: var(--space-xl);
 }
 
-h1 {
+h1,
+h2 {
   font-size: var(--font-size-xl);
-  margin: 0;
-}
-
-h3 {
-  font-size: var(--font-size-lg);
   margin: 0;
 }
 
@@ -142,18 +181,14 @@ select:focus-visible,
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--layout-tile-min-width), 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xxl);
+  gap: var(--space-xl);
+  margin-bottom: var(--space-section);
 }
 
 .kpi {
   display: flex;
   flex-direction: column;
   gap: var(--space-xxs);
-  background: var(--color-surface-raised);
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
 }
 
 .kpi-label {
@@ -172,12 +207,9 @@ select:focus-visible,
   font-size: var(--font-size-sm);
 }
 
+/* グラフ 1 枚 = 記事の 1 節。枠で囲わず、見出しと余白だけで区切る */
 .card {
-  background: var(--color-surface);
-  border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  margin-bottom: var(--space-xxl);
+  margin-bottom: var(--space-section);
 }
 
 .card-head {
@@ -189,9 +221,15 @@ select:focus-visible,
   margin-bottom: var(--space-lg);
 }
 
+/*
+ * グラフの置き場。
+ *
+ * グラフは幅に合わせて描き直されるので、横スクロールは持たせない。
+ * 棒の右に出る値ラベルは SVG の外へはみ出して描くため、ここを
+ * overflow: auto にすると常にスクロールバーが出てしまう。
+ */
 .card-body {
   width: 100%;
-  overflow-x: auto;
 }
 
 .grid-2 {

@@ -26,7 +26,7 @@ export function ChartCard({ title, note, tableRows, tableColumns, csvName, actio
     <section className="card">
       <header className="card-head">
         <div>
-          <h3>{title}</h3>
+          <h2>{title}</h2>
           {note && <p className="note">{note}</p>}
         </div>
         <div className="card-actions">
