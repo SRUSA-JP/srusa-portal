@@ -6,6 +6,7 @@
  *
  * - 寸法・分類ごとの設定 → config.ts
  * - 色そのもの・コントラスト計算 → theme/palette.ts
+ * - 文言          → config/messages.ts
  *
  * このファイルは両者を組み合わせるだけで、独自の色コードや数値を持たない。
  */
@@ -19,7 +20,8 @@ import {
   withAlpha,
   type VizTheme,
 } from '../theme/palette';
-import { EDGE, NODE, REGION, groupTypeSetting } from './config';
+import { MAP_TEXT } from '../config/messages';
+import { AVATAR, EDGE, NODE, REGION, groupTypeSetting } from './config';
 import type { Group, Person, Relation } from './schema';
 
 /* ------------------------------------------------------------------ *
@@ -45,10 +47,22 @@ export function groupTypeLabel(type: string): string {
 
 /** 関係の説明文（ツールチップ）。 */
 export function relationLabel(relation: Relation, nameOf: (id: string) => string): string {
-  const base = `${nameOf(relation.source)} ↔ ${nameOf(relation.target)}`;
-  const context = relation.context ? `（${relation.context}）` : '';
-  const uncertain = relation.uncertain ? ' ※確度が低い関係' : '';
-  return `${base}${context}${uncertain}`;
+  return MAP_TEXT.tooltip.relation(
+    nameOf(relation.source),
+    nameOf(relation.target),
+    relation.context,
+    relation.uncertain,
+  );
+}
+
+/** グループ領域の説明文（ツールチップ）。 */
+export function groupTooltip(group: Group, memberCount: number): string {
+  return MAP_TEXT.tooltip.group(groupLabel(group), memberCount);
+}
+
+/** 人物ノードの説明文（ツールチップ）。所属があれば添える。 */
+export function personTooltip(person: Person, nameMode: string): string {
+  return MAP_TEXT.tooltip.person(personLabel(person, nameMode), person.attributes);
 }
 
 /* ------------------------------------------------------------------ *
@@ -63,6 +77,7 @@ export interface RegionStyle {
   cornerRadius: number;
   labelFontSize: number;
   labelOffsetY: number;
+  labelFontWeight: number;
 }
 
 /**
@@ -83,6 +98,7 @@ export function regionStyle(group: Group, theme: VizTheme, highlighted: boolean)
     cornerRadius: REGION.cornerRadius,
     labelFontSize: REGION.labelFontSize,
     labelOffsetY: REGION.labelOffsetY,
+    labelFontWeight: REGION.labelFontWeight,
   };
 }
 
@@ -105,7 +121,7 @@ export interface NodeStyle {
   labelColor: string;
   labelFontSize: number;
   labelOffsetY: number;
-  fontWeight: number;
+  labelFontWeight: number;
 }
 
 export interface NodeState {
@@ -129,7 +145,7 @@ export function nodeStyle(theme: VizTheme, state: NodeState): NodeStyle {
     radius: size / 2,
     fill,
     ring: state.isDimmed ? dimmed : state.isCenter || state.isRelated ? accent : neutral,
-    ringWidth: state.isCenter ? NODE.ringWidth * 2 : NODE.ringWidth,
+    ringWidth: state.isCenter ? NODE.ringWidth * NODE.centerRingScale : NODE.ringWidth,
     /* 代替表示はアイコン背景の上に載るので、その背景に対して選ぶ */
     glyphColor: state.isDimmed ? dimmed : readableTextOn(fill, theme, CONTRAST_MIN_LARGE),
     labelColor: state.isDimmed
@@ -137,7 +153,7 @@ export function nodeStyle(theme: VizTheme, state: NodeState): NodeStyle {
       : chartText(theme, state.isCenter || state.isRelated ? 'primary' : 'secondary'),
     labelFontSize: NODE.labelFontSize,
     labelOffsetY: size / 2 + NODE.labelOffsetY,
-    fontWeight: state.isCenter ? 600 : 400,
+    labelFontWeight: state.isCenter ? NODE.centerLabelFontWeight : NODE.labelFontWeight,
   };
 }
 
@@ -150,15 +166,42 @@ export function nodeStyle(theme: VizTheme, state: NodeState): NodeStyle {
  */
 export type AvatarContent =
   | { kind: 'image'; src: string }
-  | { kind: 'initial'; text: string }
-  | { kind: 'silhouette' };
+  | { kind: 'initial'; text: string; fontSize: number; fontWeight: number }
+  | { kind: 'silhouette'; shape: SilhouetteShape };
 
-export function avatarFor(person: Person, nameMode: string): AvatarContent {
+/** 人型（頭と肩）の実寸。比率に半径を掛けた値だけを返す。 */
+export interface SilhouetteShape {
+  headRadius: number;
+  headOffsetY: number;
+  shoulderWidth: number;
+  shoulderHeight: number;
+  shoulderCurve: number;
+  offsetY: number;
+}
+
+function silhouetteShape(radius: number): SilhouetteShape {
+  const ratio = AVATAR.silhouette;
+  return {
+    headRadius: radius * ratio.headRadius,
+    headOffsetY: radius * ratio.headOffsetY,
+    shoulderWidth: radius * ratio.shoulderWidth,
+    shoulderHeight: radius * ratio.shoulderHeight,
+    shoulderCurve: ratio.shoulderCurve,
+    offsetY: radius * ratio.offsetY,
+  };
+}
+
+export function avatarFor(person: Person, nameMode: string, radius: number): AvatarContent {
   if (person.avatarUrl) return { kind: 'image', src: person.avatarUrl };
   if (NODE.fallback === 'initial') {
-    return { kind: 'initial', text: [...personLabel(person, nameMode)][0]?.toUpperCase() ?? '?' };
+    return {
+      kind: 'initial',
+      text: [...personLabel(person, nameMode)][0]?.toUpperCase() ?? '?',
+      fontSize: radius * AVATAR.initialFontScale,
+      fontWeight: AVATAR.initialFontWeight,
+    };
   }
-  return { kind: 'silhouette' };
+  return { kind: 'silhouette', shape: silhouetteShape(radius) };
 }
 
 export interface EdgeStyle {

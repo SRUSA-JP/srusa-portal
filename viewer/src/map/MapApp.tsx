@@ -1,38 +1,14 @@
 import { useMemo, useState } from 'react';
-import { ChartCard } from '../components';
+import { ChartCard, Picker } from '../components';
+import { joinNotes } from '../lib/display';
 import { useVizTheme } from '../theme/useThemeMode';
-import { EDGE_MODES, type EdgeMode } from './config';
+import { MAP_TEXT } from '../config/messages';
+import { EDGE_MODES, ISSUE_PREVIEW_COUNT, type EdgeMode } from './config';
 import { loadRelationshipData } from './data';
 import { groupTypeLabel, personLabel } from './display';
 import { buildLayout } from './layout';
 import { MapLegend } from './components/MapLegend';
 import { RelationshipMap } from './components/RelationshipMap';
-
-/** 画面上のプルダウン。統計ビューアと同じ見た目にそろえる。 */
-function Picker<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: Array<{ value: T; label: string }>;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <label className="field">
-      {label}
-      <select value={value} aria-label={label} onChange={(event) => onChange(event.target.value as T)}>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 export function MapApp() {
   const theme = useVizTheme();
@@ -59,9 +35,7 @@ export function MapApp() {
   if (!data || !layout) {
     return (
       <div className="app">
-        <p className="error">
-          data/srusa-relationship-*.json が見つかりません。データを置いてからビルドし直してください。
-        </p>
+        <p className="error">{MAP_TEXT.noData}</p>
       </div>
     );
   }
@@ -72,10 +46,14 @@ export function MapApp() {
     .map((person) => ({ value: person.id, label: personLabel(person, nameMode) }));
 
   const groupOptions = [
-    { value: '', label: '強調しない' },
+    { value: '', label: MAP_TEXT.picker.noHighlight },
     ...layout.regions.map((region) => ({
       value: region.group.id,
-      label: `${region.group.name}（${groupTypeLabel(region.group.type)}・${region.memberIds.length}人）`,
+      label: MAP_TEXT.picker.groupOption(
+        region.group.name,
+        groupTypeLabel(region.group.type),
+        region.memberIds.length,
+      ),
     })),
   ];
 
@@ -87,40 +65,51 @@ export function MapApp() {
         <div>
           <h1>{data.project.name}</h1>
           <p className="note">
-            {data.people.length} 人 / {layout.regions.length} グループ / {data.relations.length} 関係（データ{' '}
-            {source?.version}）
+            {MAP_TEXT.summary(
+              data.people.length,
+              layout.regions.length,
+              data.relations.length,
+              source?.version ?? '',
+            )}
           </p>
         </div>
       </header>
 
       {source && source.issues.length > 0 && (
         <p className="error">
-          データの不整合: {source.issues.slice(0, 3).join(' ')}
-          {source.issues.length > 3 ? ` ほか ${source.issues.length - 3} 件` : ''}
+          {MAP_TEXT.issues(
+            source.issues.slice(0, ISSUE_PREVIEW_COUNT),
+            Math.max(0, source.issues.length - ISSUE_PREVIEW_COUNT),
+          )}
         </p>
       )}
 
       <main>
         <ChartCard
-          title="相関図"
-          note={[
-            '所属の組み合わせが同じ人をまとめて配置し、各グループをその所属者を囲う領域として描いています。',
-            '複数の所属は領域の重なりで表れます。',
-            centerPerson ? `中心人物: ${personLabel(centerPerson, nameMode)}` : '',
-          ]
-            .filter(Boolean)
-            .join('')}
+          title={MAP_TEXT.card.map.title}
+          note={joinNotes(
+            MAP_TEXT.card.map.note,
+            centerPerson && MAP_TEXT.card.map.center(personLabel(centerPerson, nameMode)),
+          )}
           actions={
             <>
-              <Picker label="中心人物" value={centerId} options={peopleOptions} onChange={setCenterId} />
               <Picker
-                label="強調するグループ"
+                showLabel
+                label={MAP_TEXT.picker.center}
+                value={centerId}
+                options={peopleOptions}
+                onChange={setCenterId}
+              />
+              <Picker
+                showLabel
+                label={MAP_TEXT.picker.group}
                 value={highlightedGroupId}
                 options={groupOptions}
                 onChange={setHighlightedGroupId}
               />
               <Picker
-                label="関係線"
+                showLabel
+                label={MAP_TEXT.picker.edges}
                 value={edgeMode}
                 options={EDGE_MODES.map((mode) => ({ value: mode.value, label: mode.label }))}
                 onChange={setEdgeMode}
@@ -141,7 +130,7 @@ export function MapApp() {
           </div>
         </ChartCard>
 
-        <ChartCard title="グループ" note="クリックするとその領域を強調し、所属していない人を淡く表示します。">
+        <ChartCard title={MAP_TEXT.card.legend.title} note={MAP_TEXT.card.legend.note}>
           <MapLegend
             regions={layout.regions}
             theme={theme}

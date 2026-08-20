@@ -1,4 +1,4 @@
-import { avatarFor, nodeStyle, personLabel, type NodeState } from '../display';
+import { avatarFor, nodeStyle, personLabel, personTooltip, type NodeState } from '../display';
 import type { PersonPlacement } from '../layout';
 import type { VizTheme } from '../../theme/palette';
 
@@ -10,23 +10,21 @@ export interface PersonNodeProps {
   onSelect?: (personId: string) => void;
 }
 
-/** アイコンの中身。画像・イニシャル・人型のどれを描くかは display.ts が決める。 */
+/** アイコンの中身。画像・イニシャル・人型のどれをどの寸法で描くかは display.ts が決める。 */
 function AvatarContentShape({
   placement,
   nameMode,
   radius,
   color,
-  fontSize,
   clipId,
 }: {
   placement: PersonPlacement;
   nameMode: string;
   radius: number;
   color: string;
-  fontSize: number;
   clipId: string;
 }) {
-  const content = avatarFor(placement.person, nameMode);
+  const content = avatarFor(placement.person, nameMode, radius);
 
   if (content.kind === 'image') {
     return (
@@ -44,22 +42,26 @@ function AvatarContentShape({
 
   if (content.kind === 'initial') {
     return (
-      <text textAnchor="middle" dominantBaseline="central" fill={color} fontSize={fontSize} fontWeight={600}>
+      <text
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill={color}
+        fontSize={content.fontSize}
+        fontWeight={content.fontWeight}
+      >
         {content.text}
       </text>
     );
   }
 
-  /* 人型（頭と肩）。半径に対する比率で描くので、大きさが変わっても崩れない */
-  const head = radius * 0.3;
-  const shoulderWidth = radius * 0.62;
-  const shoulderTop = radius * 0.12;
+  /* 人型（頭と肩）。寸法は display.ts が半径から作るので、大きさが変わっても崩れない */
+  const shape = content.shape;
   return (
     <g clipPath={`url(#${clipId})`} fill={color}>
-      <circle cy={-radius * 0.24} r={head} />
+      <circle cy={shape.headOffsetY} r={shape.headRadius} />
       <path
-        d={`M ${-shoulderWidth} ${radius} v ${-radius * 0.34} a ${shoulderWidth} ${shoulderWidth * 0.9} 0 0 1 ${shoulderWidth * 2} 0 v ${radius * 0.34} Z`}
-        transform={`translate(0 ${shoulderTop})`}
+        d={`M ${-shape.shoulderWidth} ${radius} v ${-shape.shoulderHeight} a ${shape.shoulderWidth} ${shape.shoulderWidth * shape.shoulderCurve} 0 0 1 ${shape.shoulderWidth * 2} 0 v ${shape.shoulderHeight} Z`}
+        transform={`translate(0 ${shape.offsetY})`}
       />
     </g>
   );
@@ -69,7 +71,6 @@ function AvatarContentShape({
 export function PersonNode({ placement, theme, state, nameMode, onSelect }: PersonNodeProps) {
   const style = nodeStyle(theme, state);
   const label = personLabel(placement.person, nameMode);
-  const attributes = placement.person.attributes;
   const clipId = `avatar-clip-${placement.person.id}`;
 
   return (
@@ -87,7 +88,7 @@ export function PersonNode({ placement, theme, state, nameMode, onSelect }: Pers
           : undefined
       }
     >
-      <title>{attributes.length > 0 ? `${label}（${attributes.join('・')}）` : label}</title>
+      <title>{personTooltip(placement.person, nameMode)}</title>
       <defs>
         <clipPath id={clipId}>
           <circle r={style.radius} />
@@ -99,7 +100,6 @@ export function PersonNode({ placement, theme, state, nameMode, onSelect }: Pers
         nameMode={nameMode}
         radius={style.radius}
         color={style.glyphColor}
-        fontSize={style.radius}
         clipId={clipId}
       />
       <circle
@@ -114,7 +114,7 @@ export function PersonNode({ placement, theme, state, nameMode, onSelect }: Pers
         textAnchor="middle"
         fill={style.labelColor}
         fontSize={style.labelFontSize}
-        fontWeight={style.fontWeight}
+        fontWeight={style.labelFontWeight}
       >
         {label}
       </text>

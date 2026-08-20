@@ -1,3 +1,4 @@
+import { MAP_TEXT } from '../../config/messages';
 import { regionPaintOrder } from '../display';
 import type { MapLayout } from '../layout';
 import type { VizTheme } from '../../theme/palette';
@@ -52,7 +53,7 @@ export function RelationshipMap({
       width="100%"
       style={{ height: 'auto', display: 'block' }}
       role="img"
-      aria-label="SRUSA の相関図"
+      aria-label={MAP_TEXT.card.map.ariaLabel}
     >
       <g>
         {regions.map((region) => (

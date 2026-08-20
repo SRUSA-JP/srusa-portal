@@ -1,5 +1,5 @@
 import { roundedPolygonPath } from '../geometry';
-import { groupLabel, regionStyle } from '../display';
+import { groupLabel, groupTooltip, regionStyle } from '../display';
 import type { RegionPlacement } from '../layout';
 import type { VizTheme } from '../../theme/palette';
 
@@ -30,10 +30,10 @@ export function GroupRegion({ region, theme, highlighted }: GroupRegionProps) {
         textAnchor="middle"
         fill={style.labelColor}
         fontSize={style.labelFontSize}
-        fontWeight={600}
+        fontWeight={style.labelFontWeight}
       >
         {groupLabel(region.group)}
-        <title>{`${groupLabel(region.group)}: ${region.memberIds.length} 人`}</title>
+        <title>{groupTooltip(region.group, region.memberIds.length)}</title>
       </text>
     </g>
   );

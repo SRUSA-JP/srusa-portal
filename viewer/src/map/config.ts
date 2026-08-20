@@ -7,7 +7,9 @@
  *
  * 色そのものは持たない。色は theme/palette.ts が唯一の出どころで、
  * ここでは「何番目の色スロットを使うか」だけを決める。
+ * 文字の大きさ・太さは theme/tokens.ts のトークンを使い、値を重複させない。
  */
+import { FONT_SIZE, FONT_WEIGHT, LAYOUT } from '../theme/tokens';
 import type { GroupType } from './schema';
 
 /**
@@ -25,13 +27,45 @@ export const NODE = {
   /** ノード同士の間隔（ラベルの重なりを避ける最小幅）。 */
   gapX: 124,
   gapY: 72,
-  labelFontSize: 11,
+  labelFontSize: FONT_SIZE.xs,
   /** アイコン下端からラベルまでの距離。 */
   labelOffsetY: 14,
+  /** 通常の人物のラベルの太さ。 */
+  labelFontWeight: FONT_WEIGHT.normal,
+  /** 中心人物のラベルの太さ。 */
+  centerLabelFontWeight: FONT_WEIGHT.medium,
   /** 枠線の太さ。 */
   ringWidth: 1.5,
+  /** 中心人物の枠線を太くする倍率。 */
+  centerRingScale: 2,
   /** アイコン画像が無いときの代替表示。 */
   fallback: 'silhouette' as 'silhouette' | 'initial',
+} as const;
+
+/**
+ * アイコン画像が無いときの代替表示。
+ *
+ * すべて半径に対する比率で持つので、ノードの大きさを変えても形は崩れない。
+ */
+export const AVATAR = {
+  /** イニシャル表示の文字。半径に対する比率。 */
+  initialFontScale: 1,
+  initialFontWeight: FONT_WEIGHT.medium,
+  /** 人型（頭と肩）の各部。 */
+  silhouette: {
+    /** 頭の半径。 */
+    headRadius: 0.3,
+    /** 頭の中心の高さ（上が負）。 */
+    headOffsetY: -0.24,
+    /** 肩幅（中心から片側まで）。 */
+    shoulderWidth: 0.62,
+    /** 肩の高さ（胴の垂直部分）。 */
+    shoulderHeight: 0.34,
+    /** 肩の丸みの縦横比。 */
+    shoulderCurve: 0.9,
+    /** 肩全体を下げる量。 */
+    offsetY: 0.12,
+  },
 } as const;
 
 /**
@@ -83,8 +117,9 @@ export const REGION = {
   fillAlpha: 0.1,
   /** 強調時の塗りの不透明度。 */
   highlightFillAlpha: 0.22,
-  labelFontSize: 12,
+  labelFontSize: FONT_SIZE.sm,
   labelOffsetY: -8,
+  labelFontWeight: FONT_WEIGHT.medium,
 } as const;
 
 /** 関係線。 */
@@ -106,8 +141,8 @@ export const EDGE = {
 
 /** 凡例。 */
 export const LEGEND = {
-  swatchSize: 12,
-  fontSize: 12,
+  swatchSize: LAYOUT.swatchSize,
+  fontSize: FONT_SIZE.sm,
 } as const;
 
 /**
@@ -161,6 +196,9 @@ export const UNASSIGNED = {
   /** 領域として囲うか。 */
   showRegion: false,
 } as const;
+
+/** データの不整合をページ上部に出すときの表示件数。残りは件数だけ知らせる。 */
+export const ISSUE_PREVIEW_COUNT = 3;
 
 /** 関係線の表示切り替え。 */
 export const EDGE_MODES = [
