@@ -3,7 +3,13 @@
  *
  * CSS 側に色・書体・寸法の実値を書かないための橋渡し。
  * ここを通した値だけが styles.css から参照できる。
+ *
+ * 色は 2 段階で流し込む。
+ *   `--color-*`  : 生の配色（theme/palette.ts の値そのもの）
+ *   部品ごとの名前: どの部品に何色を使うかの割り当て（config/colors.ts）
+ * styles.css が使うのは後者だけで、生の配色は直接使わない。
  */
+import { uiCssVariables } from '../config/colors';
 import { CONTRAST_MIN_TEXT, readableTextOn, type VizTheme } from './palette';
 import { tokenCssVariables } from './tokens';
 
@@ -36,7 +42,11 @@ export function themeCssVariables(theme: VizTheme): Record<string, string> {
  */
 export function applyDesignTokens(theme: VizTheme, root: HTMLElement | null = document.documentElement): void {
   if (!root) return;
-  const variables = { ...tokenCssVariables(), ...themeCssVariables(theme) };
+  const variables = {
+    ...tokenCssVariables(),
+    ...themeCssVariables(theme),
+    ...uiCssVariables(theme),
+  };
   for (const [name, value] of Object.entries(variables)) {
     root.style.setProperty(name, value);
   }

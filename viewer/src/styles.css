@@ -3,9 +3,10 @@
  *
  * 色・書体・余白・角丸・寸法の実値はこのファイルに書かない。
  * すべて theme/cssVariables.ts が流し込むカスタムプロパティを参照する。
- *   色     → theme/palette.ts
- *   その他 → theme/tokens.ts
- * 値を変えたくなったら、変えるのは上の 2 ファイルのどちらか。
+ *   どの部品に何色を使うか → config/colors.ts（--control-* などの名前）
+ *   色そのもの             → theme/palette.ts
+ *   書体・余白・寸法       → theme/tokens.ts
+ * 値を変えたくなったら、変えるのは上の 3 ファイルのどれか。
  */
 
 * {
@@ -57,8 +58,8 @@
 
 body {
   margin: 0;
-  background: var(--color-background);
-  color: var(--color-text-primary);
+  background: var(--page-background);
+  color: var(--page-text);
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
@@ -87,12 +88,12 @@ h2 {
 
 .note {
   margin: var(--space-xxs) 0 0;
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   font-size: var(--font-size-sm);
 }
 
 .error {
-  color: var(--color-danger);
+  color: var(--error-text);
   border: var(--border-hairline) solid currentColor;
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
@@ -110,9 +111,9 @@ h2 {
 button,
 select {
   font: inherit;
-  color: var(--color-text-primary);
-  background: var(--color-surface-raised);
-  border: var(--border-hairline) solid var(--color-border);
+  color: var(--control-text);
+  background: var(--control-background);
+  border: var(--border-hairline) solid var(--control-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-lg);
   cursor: pointer;
@@ -125,13 +126,13 @@ button:disabled {
 
 button.ghost:hover:not(:disabled),
 select:hover {
-  border-color: var(--color-accent);
+  border-color: var(--control-border-hover);
 }
 
 button:focus-visible,
 select:focus-visible,
 [tabindex]:focus-visible {
-  outline: var(--border-thick) solid var(--color-accent);
+  outline: var(--border-thick) solid var(--focus-ring);
   outline-offset: var(--border-hairline);
 }
 
@@ -139,7 +140,7 @@ select:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  border-bottom: var(--border-hairline) solid var(--divider);
   margin: var(--space-xl) 0 var(--space-xxl);
 }
 
@@ -148,19 +149,19 @@ select:focus-visible,
   background: none;
   border-radius: 0;
   border-bottom: var(--border-thick) solid transparent;
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   padding: var(--space-md) var(--space-lg);
 }
 
 .tabs button.active {
-  color: var(--color-text-primary);
-  border-bottom-color: var(--color-accent);
+  color: var(--page-text);
+  border-bottom-color: var(--control-selected);
   font-weight: var(--font-weight-medium);
 }
 
 .segmented {
   display: inline-flex;
-  border: var(--border-hairline) solid var(--color-border);
+  border: var(--border-hairline) solid var(--control-border);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -169,13 +170,13 @@ select:focus-visible,
   border: none;
   border-radius: 0;
   background: none;
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   padding: var(--space-xs) var(--space-lg);
 }
 
 .segmented button.active {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--control-selected);
+  color: var(--control-selected-text);
 }
 
 .kpi-grid {
@@ -192,7 +193,7 @@ select:focus-visible,
 }
 
 .kpi-label {
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   font-size: var(--font-size-sm);
 }
 
@@ -203,7 +204,7 @@ select:focus-visible,
 }
 
 .kpi-sub {
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   font-size: var(--font-size-sm);
 }
 
@@ -268,15 +269,15 @@ table {
 th,
 td {
   padding: var(--space-sm) var(--space-lg);
-  border-bottom: var(--border-hairline) solid var(--color-border);
+  border-bottom: var(--border-hairline) solid var(--table-border);
   white-space: nowrap;
 }
 
 th {
   position: sticky;
   top: 0;
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
+  background: var(--table-header-background);
+  color: var(--table-header-text);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
@@ -296,9 +297,9 @@ td.right {
   display: flex;
   flex-direction: column;
   gap: var(--space-xxs);
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   font-size: var(--font-size-sm);
-  border-top: var(--border-hairline) solid var(--color-border);
+  border-top: var(--border-hairline) solid var(--divider);
   padding-top: var(--space-lg);
 }
 
@@ -312,21 +313,21 @@ td.right {
   align-items: center;
   gap: var(--space-sm);
   font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
 }
 
 .field input[type='number'] {
   font: inherit;
   width: var(--layout-number-input-width);
-  color: var(--color-text-primary);
-  background: var(--color-surface-raised);
-  border: var(--border-hairline) solid var(--color-border);
+  color: var(--control-text);
+  background: var(--control-background);
+  border: var(--border-hairline) solid var(--control-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
 }
 
 .field input[type='number']:focus-visible {
-  outline: var(--border-thick) solid var(--color-accent);
+  outline: var(--border-thick) solid var(--focus-ring);
   outline-offset: var(--border-hairline);
 }
 
@@ -347,7 +348,7 @@ td.right {
 }
 
 .legend-title {
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
   font-weight: var(--font-weight-medium);
 }
 
@@ -361,14 +362,14 @@ td.right {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
-  background: var(--color-surface-raised);
-  border: var(--border-hairline) solid var(--color-border);
+  background: var(--legend-background);
+  border: var(--border-hairline) solid var(--legend-border);
   border-radius: var(--radius-pill);
   padding: var(--space-xs) var(--space-lg);
 }
 
 .legend-item.active {
-  border-color: var(--color-accent);
+  border-color: var(--legend-active-border);
 }
 
 .legend-swatch {
@@ -378,5 +379,5 @@ td.right {
 }
 
 .legend-count {
-  color: var(--color-text-secondary);
+  color: var(--muted-text);
 }

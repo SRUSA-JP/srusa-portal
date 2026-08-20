@@ -5,21 +5,14 @@
  * ここが返した値をそのまま属性へ渡すだけで、色・寸法・文言を自分で決めない。
  *
  * - 寸法・分類ごとの設定 → config.ts
+ * - どの部品に何色を使うか → config/colors.ts
  * - 色そのもの・コントラスト計算 → theme/palette.ts
  * - 文言          → config/messages.ts
  *
  * このファイルは両者を組み合わせるだけで、独自の色コードや数値を持たない。
  */
-import {
-  CONTRAST_MIN_LARGE,
-  CONTRAST_MIN_TEXT,
-  chartText,
-  ensureContrast,
-  mutedFill,
-  readableTextOn,
-  withAlpha,
-  type VizTheme,
-} from '../theme/palette';
+import { CONTRAST_MIN_LARGE, CONTRAST_MIN_TEXT, ensureContrast, withAlpha, type VizTheme } from '../theme/palette';
+import { figureColors } from '../config/colors';
 import { MAP_TEXT } from '../config/messages';
 import { AVATAR, EDGE, NODE, REGION, groupTypeSetting } from './config';
 import type { Group, Person, Relation } from './schema';
@@ -87,13 +80,14 @@ export interface RegionStyle {
  * コントラスト比を満たすところまで寄せる。
  */
 export function regionStyle(group: Group, theme: VizTheme, highlighted: boolean): RegionStyle {
+  const colors = figureColors(theme);
   const setting = groupTypeSetting(group.type);
-  const base = theme.categorical[setting.colorSlot % theme.categorical.length];
-  const stroke = ensureContrast(base, theme.surface, CONTRAST_MIN_LARGE);
+  const base = colors.slot(setting.colorSlot);
+  const stroke = ensureContrast(base, colors.background, CONTRAST_MIN_LARGE);
   return {
     stroke,
     fill: withAlpha(stroke, highlighted ? REGION.highlightFillAlpha : REGION.fillAlpha),
-    labelColor: ensureContrast(base, theme.surface, CONTRAST_MIN_TEXT),
+    labelColor: ensureContrast(base, colors.background, CONTRAST_MIN_TEXT),
     strokeWidth: REGION.strokeWidth,
     cornerRadius: REGION.cornerRadius,
     labelFontSize: REGION.labelFontSize,
@@ -134,23 +128,24 @@ export interface NodeState {
 
 /** 人物ノードの見た目。アイコンの有無に関わらず同じ寸法を返す。 */
 export function nodeStyle(theme: VizTheme, state: NodeState): NodeStyle {
-  const accent = ensureContrast(theme.categorical[0], theme.surface, CONTRAST_MIN_LARGE);
-  const neutral = chartText(theme, 'secondary');
-  const dimmed = mutedFill(theme);
+  const colors = figureColors(theme);
+  const accent = ensureContrast(colors.primary, colors.background, CONTRAST_MIN_LARGE);
   const size = state.isCenter ? NODE.size * NODE.centerScale : NODE.size;
-  const fill = theme.surface;
+  const fill = colors.background;
 
   return {
     size,
     radius: size / 2,
     fill,
-    ring: state.isDimmed ? dimmed : state.isCenter || state.isRelated ? accent : neutral,
+    ring: state.isDimmed ? colors.dimmed : state.isCenter || state.isRelated ? accent : colors.axis,
     ringWidth: state.isCenter ? NODE.ringWidth * NODE.centerRingScale : NODE.ringWidth,
     /* 代替表示はアイコン背景の上に載るので、その背景に対して選ぶ */
-    glyphColor: state.isDimmed ? dimmed : readableTextOn(fill, theme, CONTRAST_MIN_LARGE),
+    glyphColor: state.isDimmed ? colors.dimmed : colors.labelOn(fill, CONTRAST_MIN_LARGE),
     labelColor: state.isDimmed
-      ? dimmed
-      : chartText(theme, state.isCenter || state.isRelated ? 'primary' : 'secondary'),
+      ? colors.dimmed
+      : state.isCenter || state.isRelated
+        ? colors.strongText
+        : colors.axis,
     labelFontSize: NODE.labelFontSize,
     labelOffsetY: size / 2 + NODE.labelOffsetY,
     labelFontWeight: state.isCenter ? NODE.centerLabelFontWeight : NODE.labelFontWeight,
@@ -225,10 +220,11 @@ export function edgeStyle(
   highlighted: boolean,
   length = 0,
 ): EdgeStyle {
+  const colors = figureColors(theme);
   return {
     stroke: highlighted
-      ? ensureContrast(theme.categorical[0], theme.surface, CONTRAST_MIN_LARGE)
-      : chartText(theme, 'secondary'),
+      ? ensureContrast(colors.primary, colors.background, CONTRAST_MIN_LARGE)
+      : colors.axis,
     strokeWidth: highlighted ? EDGE.highlightWidth : EDGE.width,
     strokeDasharray: relation.uncertain ? EDGE.uncertainDash : undefined,
     opacity: EDGE.opacity,

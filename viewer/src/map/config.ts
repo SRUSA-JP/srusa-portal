@@ -149,7 +149,7 @@ export const LEGEND = {
  * グループの分類ごとの見せ方。
  *
  * - `label`: 凡例に出す分類名
- * - `colorSlot`: theme.categorical の何番目を使うか（8 枠を循環）
+ * - `colorSlot`: カテゴリ配色の何番目を使うか（config/colors.ts の枠を循環）
  * - `depth`: 入れ子の深さ。大きいほど内側に描き、余白を詰める
  * - `order`: 描画順の基準。小さいほど先（＝下）に描く
  */

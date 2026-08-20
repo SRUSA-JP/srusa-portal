@@ -10,10 +10,11 @@ import {
   ZAxis,
 } from 'recharts';
 import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, SCATTER, VALUE_LABEL } from '../config/charts';
+import { figureColors } from '../config/colors';
 import type { ScatterPoint } from '../lib/selectors';
 import { axisTitle } from '../lib/display';
 import { formatCompact, formatDecimal } from '../lib/format';
-import { chartText, cursorFill, type VizTheme } from '../theme/palette';
+import type { VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
 export interface MetricScatterProps {
@@ -42,24 +43,24 @@ export function MetricScatter({
   showValueLabels = true,
   height = CHART_HEIGHT.base,
 }: MetricScatterProps) {
-  const axisColor = chartText(theme);
+  const colors = figureColors(theme);
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ScatterChart margin={CHART_MARGIN.scatter}>
-        <CartesianGrid stroke={theme.grid} strokeDasharray={GRID_DASH} />
+        <CartesianGrid stroke={colors.grid} strokeDasharray={GRID_DASH} />
         <XAxis
           type="number"
           dataKey="x"
           name={xLabel}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
           tickFormatter={formatCompact}
           label={{
             value: axisTitle(xLabel, xUnit),
             position: 'insideBottom',
             offset: AXIS.titleOffset,
-            fill: axisColor,
+            fill: colors.axis,
             fontSize: AXIS.fontSize,
           }}
         />
@@ -67,20 +68,20 @@ export function MetricScatter({
           type="number"
           dataKey="y"
           name={yLabel}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
           tickFormatter={formatCompact}
           label={{
             value: axisTitle(yLabel, yUnit),
             angle: AXIS.titleAngleY,
             position: 'insideLeft',
-            fill: axisColor,
+            fill: colors.axis,
             fontSize: AXIS.fontSize,
           }}
         />
         <ZAxis range={[SCATTER.pointArea, SCATTER.pointArea]} />
         <Tooltip
-          cursor={{ stroke: theme.grid, fill: cursorFill(theme) }}
+          cursor={{ stroke: colors.grid, fill: colors.cursor }}
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
             const point = payload[0].payload as ScatterPoint;
@@ -98,18 +99,18 @@ export function MetricScatter({
         />
         <Scatter
           data={points}
-          fill={theme.categorical[0]}
-          stroke={theme.surface}
+          fill={colors.primary}
+          stroke={colors.separator}
           strokeWidth={SCATTER.strokeWidth}
           isAnimationActive={false}
         >
-          {/* 点の上に縦軸の値、下に名前。どちらもグラフ面の上なので chartText を使う */}
+          {/* 点の上に縦軸の値、下に名前。どちらもグラフ面の上なので軸と同じ文字色を使う */}
           {showValueLabels && (
             <LabelList
               dataKey="y"
               position="top"
               offset={VALUE_LABEL.offset}
-              fill={axisColor}
+              fill={colors.axis}
               fontSize={VALUE_LABEL.fontSize}
               formatter={(value) => formatDecimal(Number(value))}
             />
@@ -118,7 +119,7 @@ export function MetricScatter({
             dataKey="name"
             position="bottom"
             offset={VALUE_LABEL.offset}
-            fill={axisColor}
+            fill={colors.axis}
             fontSize={VALUE_LABEL.captionFontSize}
           />
         </Scatter>

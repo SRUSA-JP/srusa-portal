@@ -18,10 +18,11 @@ import {
   LEGEND,
   VALUE_LABEL,
 } from '../config/charts';
+import { figureColors } from '../config/colors';
 import type { StackedSeries } from '../lib/selectors';
 import { formatValue, formatWithUnit } from '../lib/display';
 import { formatCompact } from '../lib/format';
-import { chartText, colorScale, cursorFill, readableTextOn, type VizTheme } from '../theme/palette';
+import type { VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
 export interface SeriesBarChartProps {
@@ -53,11 +54,8 @@ export function SeriesBarChart({
   height = CHART_HEIGHT.tall,
   labelThreshold = VALUE_LABEL.minRatio,
 }: SeriesBarChartProps) {
-  const color = colorScale(
-    data.series.map((s) => s.key),
-    theme,
-  );
-  const axisColor = chartText(theme);
+  const colors = figureColors(theme);
+  const color = colors.series(data.series.map((s) => s.key));
 
   /* 積み上げの各セグメントに数字を置くので、細すぎる分だけ間引く基準を作る */
   const maxTotal = data.rows.reduce((acc, row) => {
@@ -69,11 +67,11 @@ export function SeriesBarChart({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data.rows} margin={CHART_MARGIN.series} barCategoryGap={BAR.categoryGap.series}>
-        <CartesianGrid stroke={theme.grid} strokeDasharray={GRID_DASH} vertical={false} />
+        <CartesianGrid stroke={colors.grid} strokeDasharray={GRID_DASH} vertical={false} />
         <XAxis
           dataKey={categoryKey}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
           interval={0}
           angle={AXIS.tickAngle}
           textAnchor="end"
@@ -81,11 +79,11 @@ export function SeriesBarChart({
         />
         <YAxis
           tickFormatter={formatCompact}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
         />
         <Tooltip
-          cursor={{ fill: cursorFill(theme) }}
+          cursor={{ fill: colors.cursor }}
           content={({ active, payload, label }) =>
             active && payload?.length ? (
               <ChartTooltip
@@ -101,7 +99,7 @@ export function SeriesBarChart({
           }
         />
         <Legend
-          wrapperStyle={{ color: axisColor, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
+          wrapperStyle={{ color: colors.axis, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
         />
         {data.series.map((series, index) => (
           <Bar
@@ -111,7 +109,7 @@ export function SeriesBarChart({
             stackId={stacked ? 'total' : undefined}
             fill={color(series.key)}
             /* 隣接セグメントの間に背景色の隙間を作る（枠線ではなく余白として） */
-            stroke={stacked ? theme.surface : undefined}
+            stroke={stacked ? colors.separator : undefined}
             strokeWidth={stacked ? BAR.stackGap : 0}
             radius={
               stacked && index === data.series.length - 1
@@ -124,7 +122,7 @@ export function SeriesBarChart({
               dataKey={series.key}
               position={stacked ? 'center' : 'top'}
               /* 積み上げは色面の上に載るので、その塗りに対して読める色を都度求める */
-              fill={stacked ? readableTextOn(color(series.key), theme) : axisColor}
+              fill={stacked ? colors.labelOn(color(series.key)) : colors.axis}
               fontSize={VALUE_LABEL.fontSize}
               formatter={(value) => {
                 const numeric = Number(value);

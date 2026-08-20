@@ -10,10 +10,11 @@ import {
   YAxis,
 } from 'recharts';
 import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, LEGEND, LINE, VALUE_LABEL } from '../config/charts';
+import { figureColors } from '../config/colors';
 import type { StackedSeries } from '../lib/selectors';
 import { formatValue, formatWithUnit } from '../lib/display';
 import { formatCompact } from '../lib/format';
-import { chartText, colorScale, cursorFill, type VizTheme } from '../theme/palette';
+import type { VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
 export interface TrendLineChartProps {
@@ -36,30 +37,27 @@ export function TrendLineChart({
   height = CHART_HEIGHT.base,
   showValueLabels = true,
 }: TrendLineChartProps) {
-  const color = colorScale(
-    data.series.map((s) => s.key),
-    theme,
-  );
-  const axisColor = chartText(theme);
+  const colors = figureColors(theme);
+  const color = colors.series(data.series.map((s) => s.key));
   const multiSeries = data.series.length > 1;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data.rows} margin={CHART_MARGIN.line}>
-        <CartesianGrid stroke={theme.grid} strokeDasharray={GRID_DASH} vertical={false} />
+        <CartesianGrid stroke={colors.grid} strokeDasharray={GRID_DASH} vertical={false} />
         <XAxis
           dataKey={categoryKey}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
           interval={0}
         />
         <YAxis
           tickFormatter={formatCompact}
-          stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+          stroke={colors.grid}
+          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
         />
         <Tooltip
-          cursor={{ stroke: theme.grid, fill: cursorFill(theme) }}
+          cursor={{ stroke: colors.grid, fill: colors.cursor }}
           content={({ active, payload, label }) =>
             active && payload?.length ? (
               <ChartTooltip
@@ -76,7 +74,7 @@ export function TrendLineChart({
         />
         {multiSeries && (
           <Legend
-            wrapperStyle={{ color: axisColor, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
+            wrapperStyle={{ color: colors.axis, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
           />
         )}
         {data.series.map((series) => (
@@ -90,7 +88,7 @@ export function TrendLineChart({
             dot={{
               r: LINE.dotRadius,
               fill: color(series.key),
-              stroke: theme.surface,
+              stroke: colors.separator,
               strokeWidth: LINE.dotStrokeWidth,
             }}
             activeDot={{ r: LINE.activeDotRadius }}
@@ -101,7 +99,7 @@ export function TrendLineChart({
                 dataKey={series.key}
                 position="top"
                 offset={VALUE_LABEL.offset}
-                fill={axisColor}
+                fill={colors.axis}
                 fontSize={VALUE_LABEL.fontSize}
                 formatter={(value) => formatValue(Number(value))}
               />

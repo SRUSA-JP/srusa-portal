@@ -10,17 +10,18 @@ import {
   YAxis,
 } from 'recharts';
 import { AXIS, BAR, CHART_HEIGHT, CHART_MARGIN, GRID_DASH } from '../config/charts';
+import { figureColors } from '../config/colors';
 import type { Entry } from '../lib/selectors';
 import { formatValue, formatWithUnit } from '../lib/display';
 import { formatCompact } from '../lib/format';
-import { chartText, cursorFill, mutedFill, type VizTheme } from '../theme/palette';
+import type { VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
 export interface RankBarChartProps {
   data: Entry[];
   theme: VizTheme;
-  /** 単一系列なので既定はスロット 1。強調したい実体があるときだけ変える。 */
-  colorSlot?: number;
+  /** 既定は config/colors.ts の割り当て。特定の色にしたいときだけ渡す。 */
+  color?: string;
   /** 強調表示するキー（選択中のプレイヤーなど）。他はグレーにはせず彩度そのまま。 */
   highlightKey?: string;
   unit?: string;
@@ -33,15 +34,14 @@ export interface RankBarChartProps {
 export function RankBarChart({
   data,
   theme,
-  colorSlot = 0,
+  color,
   highlightKey,
   unit = '',
   height = CHART_HEIGHT.compact,
   horizontal = true,
 }: RankBarChartProps) {
-  const base = theme.categorical[colorSlot % theme.categorical.length];
-  const dim = mutedFill(theme);
-  const axisColor = chartText(theme);
+  const colors = figureColors(theme);
+  const base = color ?? colors.primary;
   const max = data.reduce((acc, e) => Math.max(acc, e.value), 0);
 
   return (
@@ -53,7 +53,7 @@ export function RankBarChart({
         barCategoryGap={horizontal ? BAR.categoryGap.horizontal : BAR.categoryGap.vertical}
       >
         <CartesianGrid
-          stroke={theme.grid}
+          stroke={colors.grid}
           strokeDasharray={GRID_DASH}
           horizontal={!horizontal}
           vertical={horizontal}
@@ -63,16 +63,16 @@ export function RankBarChart({
             <XAxis
               type="number"
               tickFormatter={formatCompact}
-              stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+              stroke={colors.grid}
+              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
             />
             <YAxis
               type="category"
               dataKey="label"
               width={AXIS.categoryWidth}
               interval={0}
-              stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+              stroke={colors.grid}
+              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
             />
           </>
         ) : (
@@ -80,8 +80,8 @@ export function RankBarChart({
             <XAxis
               type="category"
               dataKey="label"
-              stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+              stroke={colors.grid}
+              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
               interval={0}
               angle={AXIS.tickAngle}
               textAnchor="end"
@@ -90,13 +90,13 @@ export function RankBarChart({
             <YAxis
               type="number"
               tickFormatter={formatCompact}
-              stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
+              stroke={colors.grid}
+              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
             />
           </>
         )}
         <Tooltip
-          cursor={{ fill: cursorFill(theme) }}
+          cursor={{ fill: colors.cursor }}
           content={({ active, payload, label }) =>
             active && payload?.length ? (
               <ChartTooltip
@@ -113,13 +113,13 @@ export function RankBarChart({
           isAnimationActive={false}
         >
           {data.map((entry) => (
-            <Cell key={entry.key} fill={highlightKey && entry.key !== highlightKey ? dim : base} />
+            <Cell key={entry.key} fill={highlightKey && entry.key !== highlightKey ? colors.dimmed : base} />
           ))}
           {/* 全ての棒に数値を出す。単位は最大値にだけ付けて横幅を抑える */}
           <LabelList
             dataKey="value"
             position={horizontal ? 'right' : 'top'}
-            fill={axisColor}
+            fill={colors.axis}
             fontSize={AXIS.fontSize}
             formatter={(value) =>
               Number(value) === max ? formatWithUnit(Number(value), unit) : formatValue(Number(value))

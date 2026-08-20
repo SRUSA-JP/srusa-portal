@@ -1,6 +1,7 @@
 import { TOOLTIP } from '../config/charts';
+import { figureColors } from '../config/colors';
 import { FONT_WEIGHT } from '../theme/tokens';
-import { tooltipSurface, type VizTheme } from '../theme/palette';
+import type { VizTheme } from '../theme/palette';
 
 export interface TooltipRow {
   /** 行の見出し（系列名・軸名）。単一系列では省略できる。 */
@@ -21,13 +22,13 @@ export interface ChartTooltipProps {
 /**
  * すべてのグラフで共用するツールチップ。
  *
- * 色は `tooltipSurface()` だけが決める。ここでも呼び出し側でも色コードを書かない。
+ * 色は config/colors.ts の割り当てだけが決める。ここでも呼び出し側でも色コードを書かない。
  * 寸法は config/charts.ts の TOOLTIP を参照する。
  * Recharts の既定ツールチップは系列色をそのまま文字色に使い、色が無いときは黒に
  * なるため、背景とのコントラストが保証できない。そのため描画ごと差し替えている。
  */
 export function ChartTooltip({ theme, title, rows }: ChartTooltipProps) {
-  const surface = tooltipSurface(theme);
+  const surface = figureColors(theme).tooltip;
 
   return (
     <div
