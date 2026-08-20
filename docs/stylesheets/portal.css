@@ -43,6 +43,38 @@
 }
 
 /*
+ * ページ単位の見た目（スキン）。
+ *
+ * 埋め込んだアプリと同じ見た目をページ全体（ヘッダー・タブ・本文）へ広げる。
+ * どのページがどのスキンかは Markdown の `?skin=` が唯一の指定で、
+ * docs/javascripts/portal.js がそれを body に写す。
+ * 対応するアプリ側のプリセットは viewer/src/config/skins.ts。
+ */
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+[data-portal-skin='minecraft'] {
+  /* ドット書体。読み込めない場合は後ろの書体に落ちる */
+  --md-text-font-family: 'DotGothic16', 'Hiragino Sans', 'Noto Sans JP', monospace;
+  /* 草の緑。ヘッダーとリンクの色がこれで決まる */
+  --portal-brand: #2e7d32;
+  --portal-brand-strong: #1b5e20;
+  --portal-brand-soft: #6abf69;
+  --portal-accent: #43a047;
+}
+
+[data-portal-skin='minecraft'] .md-header,
+[data-portal-skin='minecraft'] .md-tabs,
+[data-portal-skin='minecraft'] .md-nav,
+[data-portal-skin='minecraft'] .md-typeset {
+  font-family: var(--md-text-font-family);
+}
+
+/* ドット絵の輪郭をぼかさない */
+[data-portal-skin='minecraft'] img {
+  image-rendering: pixelated;
+}
+
+/*
  * Material のテーマ変数へ流し込む。
  * ここは対応表なので、色を変えるときは上のブロックを編集する。
  */

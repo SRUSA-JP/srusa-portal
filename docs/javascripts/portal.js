@@ -1,12 +1,32 @@
 /**
- * 埋め込んだアプリの高さを、その中身に合わせる。
+ * 埋め込んだアプリに合わせて、ページ側を整える。
  *
- * アプリ（viewer/src/embed/index.ts）が自分の高さを postMessage で知らせてくる。
- * それを受けて iframe の高さを変えることで、記事の途中にスクロール枠が
- * できるのを防ぐ。メッセージの形式は上記ファイルが定義しているので、
- * 変えるときは両方をそろえる。
+ * 1. アプリ（viewer/src/embed/index.ts）が postMessage で知らせてくる高さに
+ *    iframe を合わせ、記事の途中にスクロール枠ができないようにする。
+ *    メッセージの形式は上記ファイルが定義しているので、変えるときは両方をそろえる。
+ * 2. 埋め込み URL の `?skin=` をページ側にも写し、ヘッダーや本文の見た目を
+ *    アプリとそろえる（対応する指定は docs/stylesheets/portal.css）。
  */
 (function () {
+  /**
+   * 埋め込み URL の `?skin=` をページ全体へ広げる。
+   * 指定は Markdown の 1 か所（iframe の src）だけで済ませる。
+   */
+  function applyPageSkin() {
+    var frame = document.querySelector('.app-embed iframe');
+    if (!frame) return;
+
+    var source = new URL(frame.getAttribute('src'), window.location.href);
+    var skin = source.searchParams.get('skin');
+    if (skin) document.body.setAttribute('data-portal-skin', skin);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyPageSkin);
+  } else {
+    applyPageSkin();
+  }
+
   var HEIGHT_MESSAGE_TYPE = 'srusa-portal:height';
   var HEIGHT_APPLIED_MESSAGE_TYPE = 'srusa-portal:height-applied';
 
