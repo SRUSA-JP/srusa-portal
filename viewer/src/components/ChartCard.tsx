@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { TABLE_TEXT } from '../config/messages';
 import { DataTable, type Column } from './DataTable';
 import type { Row } from '../lib/export';
 
@@ -32,7 +33,7 @@ export function ChartCard({ title, note, tableRows, tableColumns, csvName, actio
           {actions}
           {hasTable && (
             <button type="button" className="ghost" onClick={() => setShowTable((v) => !v)}>
-              {showTable ? 'グラフ' : '表'}
+              {showTable ? TABLE_TEXT.toggle.toChart : TABLE_TEXT.toggle.toTable}
             </button>
           )}
         </div>

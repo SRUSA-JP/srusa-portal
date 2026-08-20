@@ -9,8 +9,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import {
+  AXIS,
+  BAR,
+  CHART_HEIGHT,
+  CHART_MARGIN,
+  GRID_DASH,
+  LEGEND,
+  VALUE_LABEL,
+} from '../config/charts';
 import type { StackedSeries } from '../lib/selectors';
-import { formatCompact, formatDecimal, formatInt } from '../lib/format';
+import { formatValue, formatWithUnit } from '../lib/display';
+import { formatCompact } from '../lib/format';
 import { chartText, colorScale, cursorFill, readableTextOn, type VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
@@ -40,15 +50,14 @@ export function SeriesBarChart({
   stacked = true,
   categoryKey = 'name',
   unit = '',
-  height = 380,
-  labelThreshold = 0.06,
+  height = CHART_HEIGHT.tall,
+  labelThreshold = VALUE_LABEL.minRatio,
 }: SeriesBarChartProps) {
   const color = colorScale(
     data.series.map((s) => s.key),
     theme,
   );
   const axisColor = chartText(theme);
-  const format = (value: number) => (Number.isInteger(value) ? formatInt(value) : formatDecimal(value));
 
   /* 積み上げの各セグメントに数字を置くので、細すぎる分だけ間引く基準を作る */
   const maxTotal = data.rows.reduce((acc, row) => {
@@ -59,21 +68,21 @@ export function SeriesBarChart({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data.rows} margin={{ top: 20, right: 16, bottom: 56, left: 8 }} barCategoryGap="22%">
-        <CartesianGrid stroke={theme.grid} strokeDasharray="0" vertical={false} />
+      <BarChart data={data.rows} margin={CHART_MARGIN.series} barCategoryGap={BAR.categoryGap.series}>
+        <CartesianGrid stroke={theme.grid} strokeDasharray={GRID_DASH} vertical={false} />
         <XAxis
           dataKey={categoryKey}
           stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: 12 }}
+          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
           interval={0}
-          angle={-35}
+          angle={AXIS.tickAngle}
           textAnchor="end"
-          height={72}
+          height={AXIS.tickHeight}
         />
         <YAxis
           tickFormatter={formatCompact}
           stroke={theme.grid}
-          tick={{ fill: axisColor, fontSize: 12 }}
+          tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
         />
         <Tooltip
           cursor={{ fill: cursorFill(theme) }}
@@ -84,14 +93,16 @@ export function SeriesBarChart({
                 title={String(label)}
                 rows={payload.map((item) => ({
                   label: String(item.name),
-                  value: `${format(Number(item.value))}${unit}`,
+                  value: formatWithUnit(Number(item.value), unit),
                   color: typeof item.color === 'string' ? item.color : undefined,
                 }))}
               />
             ) : null
           }
         />
-        <Legend wrapperStyle={{ color: axisColor, fontSize: 12, paddingTop: 8 }} />
+        <Legend
+          wrapperStyle={{ color: axisColor, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
+        />
         {data.series.map((series, index) => (
           <Bar
             key={series.key}
@@ -99,10 +110,14 @@ export function SeriesBarChart({
             name={series.label}
             stackId={stacked ? 'total' : undefined}
             fill={color(series.key)}
-            /* 隣接セグメントの間に 2px の背景色の隙間を作る（枠線ではなく余白として） */
+            /* 隣接セグメントの間に背景色の隙間を作る（枠線ではなく余白として） */
             stroke={stacked ? theme.surface : undefined}
-            strokeWidth={stacked ? 2 : 0}
-            radius={stacked && index === data.series.length - 1 ? [4, 4, 0, 0] : undefined}
+            strokeWidth={stacked ? BAR.stackGap : 0}
+            radius={
+              stacked && index === data.series.length - 1
+                ? [BAR.radius, BAR.radius, 0, 0]
+                : undefined
+            }
             isAnimationActive={false}
           >
             <LabelList
@@ -110,12 +125,12 @@ export function SeriesBarChart({
               position={stacked ? 'center' : 'top'}
               /* 積み上げは色面の上に載るので、その塗りに対して読める色を都度求める */
               fill={stacked ? readableTextOn(color(series.key), theme) : axisColor}
-              fontSize={11}
+              fontSize={VALUE_LABEL.fontSize}
               formatter={(value) => {
                 const numeric = Number(value);
                 if (!numeric) return '';
                 if (stacked && numeric < minLabelValue) return '';
-                return format(numeric);
+                return formatValue(numeric);
               }}
             />
           </Bar>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
+import { TABLE_TEXT } from '../config/messages';
 import { downloadCsv, type Row } from '../lib/export';
-import { formatDecimal, formatInt } from '../lib/format';
+import { formatValue } from '../lib/display';
 
 export interface Column {
   key: string;
@@ -19,12 +20,12 @@ export interface DataTableProps {
 
 function formatCell(value: Row[string]): string {
   if (value === null || value === undefined) return '';
-  if (typeof value === 'number') return Number.isInteger(value) ? formatInt(value) : formatDecimal(value);
+  if (typeof value === 'number') return formatValue(value);
   return value;
 }
 
 /** 並び替え・CSV 出力に対応した素の表。どのグラフの裏側でも使える。 */
-export function DataTable({ rows, columns, csvName = 'export.csv', initialSort }: DataTableProps) {
+export function DataTable({ rows, columns, csvName = TABLE_TEXT.defaultCsvName, initialSort }: DataTableProps) {
   const cols: Column[] = useMemo(
     () =>
       columns ??
@@ -54,7 +55,7 @@ export function DataTable({ rows, columns, csvName = 'export.csv', initialSort }
     <div className="table-wrap">
       <div className="table-actions">
         <button type="button" className="ghost" onClick={() => downloadCsv(csvName, sorted, cols.map((c) => c.key))}>
-          CSV を書き出す
+          {TABLE_TEXT.exportCsv}
         </button>
       </div>
       <div className="table-scroll">
@@ -68,7 +69,11 @@ export function DataTable({ rows, columns, csvName = 'export.csv', initialSort }
                   onClick={() => setSort((s) => ({ key: col.key, desc: s?.key === col.key ? !s.desc : true }))}
                 >
                   {col.label}
-                  {sort?.key === col.key ? (sort.desc ? ' ▾' : ' ▴') : ''}
+                  {sort?.key === col.key
+                    ? sort.desc
+                      ? TABLE_TEXT.sortMark.desc
+                      : TABLE_TEXT.sortMark.asc
+                    : ''}
                 </th>
               ))}
             </tr>

@@ -1,3 +1,5 @@
+import { TOOLTIP } from '../config/charts';
+import { FONT_WEIGHT } from '../theme/tokens';
 import { tooltipSurface, type VizTheme } from '../theme/palette';
 
 export interface TooltipRow {
@@ -20,6 +22,7 @@ export interface ChartTooltipProps {
  * すべてのグラフで共用するツールチップ。
  *
  * 色は `tooltipSurface()` だけが決める。ここでも呼び出し側でも色コードを書かない。
+ * 寸法は config/charts.ts の TOOLTIP を参照する。
  * Recharts の既定ツールチップは系列色をそのまま文字色に使い、色が無いときは黒に
  * なるため、背景とのコントラストが保証できない。そのため描画ごと差し替えている。
  */
@@ -30,37 +33,42 @@ export function ChartTooltip({ theme, title, rows }: ChartTooltipProps) {
     <div
       style={{
         background: surface.background,
-        border: `1px solid ${surface.border}`,
-        borderRadius: 8,
-        padding: '6px 10px',
-        fontSize: 12,
+        border: `${TOOLTIP.borderWidth}px solid ${surface.border}`,
+        borderRadius: TOOLTIP.radius,
+        padding: `${TOOLTIP.padding.y}px ${TOOLTIP.padding.x}px`,
+        fontSize: TOOLTIP.fontSize,
         color: surface.textColor,
         display: 'grid',
-        gap: 2,
+        gap: TOOLTIP.rowGap,
       }}
     >
       {title && (
-        <strong style={{ color: surface.titleColor, fontWeight: 600 }}>{title}</strong>
+        <strong style={{ color: surface.titleColor, fontWeight: FONT_WEIGHT.medium }}>{title}</strong>
       )}
       {rows.map((row, index) => (
         <div
           key={row.label ?? index}
-          style={{ color: surface.textColor, display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{
+            color: surface.textColor,
+            display: 'flex',
+            alignItems: 'center',
+            gap: TOOLTIP.itemGap,
+          }}
         >
           {row.color && (
             <span
               aria-hidden
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: 2,
+                width: TOOLTIP.swatch.size,
+                height: TOOLTIP.swatch.size,
+                borderRadius: TOOLTIP.swatch.radius,
                 background: surface.seriesColor(row.color),
                 flex: '0 0 auto',
               }}
             />
           )}
           {row.label && <span>{row.label}</span>}
-          <strong style={{ marginLeft: 'auto', fontWeight: 600 }}>{row.value}</strong>
+          <strong style={{ marginLeft: 'auto', fontWeight: FONT_WEIGHT.medium }}>{row.value}</strong>
         </div>
       ))}
     </div>

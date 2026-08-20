@@ -2,6 +2,7 @@ export * from './ChartCard';
 export * from './ChartTooltip';
 export * from './DataTable';
 export * from './KpiTile';
+export * from './Picker';
 export * from './RankBarChart';
 export * from './Segmented';
 export * from './SeriesBarChart';

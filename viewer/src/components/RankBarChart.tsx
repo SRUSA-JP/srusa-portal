@@ -9,8 +9,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { AXIS, BAR, CHART_HEIGHT, CHART_MARGIN, GRID_DASH } from '../config/charts';
 import type { Entry } from '../lib/selectors';
-import { formatCompact, formatDecimal, formatInt } from '../lib/format';
+import { formatValue, formatWithUnit } from '../lib/display';
+import { formatCompact } from '../lib/format';
 import { chartText, cursorFill, mutedFill, type VizTheme } from '../theme/palette';
 import { ChartTooltip } from './ChartTooltip';
 
@@ -34,26 +36,25 @@ export function RankBarChart({
   colorSlot = 0,
   highlightKey,
   unit = '',
-  height = 320,
+  height = CHART_HEIGHT.compact,
   horizontal = true,
 }: RankBarChartProps) {
   const base = theme.categorical[colorSlot % theme.categorical.length];
   const dim = mutedFill(theme);
   const axisColor = chartText(theme);
   const max = data.reduce((acc, e) => Math.max(acc, e.value), 0);
-  const format = (value: number) => (Number.isInteger(value) ? formatInt(value) : formatDecimal(value));
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart
         data={data}
         layout={horizontal ? 'vertical' : 'horizontal'}
-        margin={{ top: 4, right: 56, bottom: 4, left: 8 }}
-        barCategoryGap={horizontal ? '28%' : '24%'}
+        margin={CHART_MARGIN.bar}
+        barCategoryGap={horizontal ? BAR.categoryGap.horizontal : BAR.categoryGap.vertical}
       >
         <CartesianGrid
           stroke={theme.grid}
-          strokeDasharray="0"
+          strokeDasharray={GRID_DASH}
           horizontal={!horizontal}
           vertical={horizontal}
         />
@@ -63,15 +64,15 @@ export function RankBarChart({
               type="number"
               tickFormatter={formatCompact}
               stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
             />
             <YAxis
               type="category"
               dataKey="label"
-              width={132}
+              width={AXIS.categoryWidth}
               interval={0}
               stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
             />
           </>
         ) : (
@@ -80,17 +81,17 @@ export function RankBarChart({
               type="category"
               dataKey="label"
               stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
               interval={0}
-              angle={-35}
+              angle={AXIS.tickAngle}
               textAnchor="end"
-              height={72}
+              height={AXIS.tickHeight}
             />
             <YAxis
               type="number"
               tickFormatter={formatCompact}
               stroke={theme.grid}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: AXIS.fontSize }}
             />
           </>
         )}
@@ -101,12 +102,16 @@ export function RankBarChart({
               <ChartTooltip
                 theme={theme}
                 title={String(label)}
-                rows={[{ value: `${format(Number(payload[0].value))}${unit}` }]}
+                rows={[{ value: formatWithUnit(Number(payload[0].value), unit) }]}
               />
             ) : null
           }
         />
-        <Bar dataKey="value" radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]} isAnimationActive={false}>
+        <Bar
+          dataKey="value"
+          radius={horizontal ? [0, BAR.radius, BAR.radius, 0] : [BAR.radius, BAR.radius, 0, 0]}
+          isAnimationActive={false}
+        >
           {data.map((entry) => (
             <Cell key={entry.key} fill={highlightKey && entry.key !== highlightKey ? dim : base} />
           ))}
@@ -115,9 +120,9 @@ export function RankBarChart({
             dataKey="value"
             position={horizontal ? 'right' : 'top'}
             fill={axisColor}
-            fontSize={12}
+            fontSize={AXIS.fontSize}
             formatter={(value) =>
-              Number(value) === max ? `${format(Number(value))}${unit}` : format(Number(value))
+              Number(value) === max ? formatWithUnit(Number(value), unit) : formatValue(Number(value))
             }
           />
         </Bar>
