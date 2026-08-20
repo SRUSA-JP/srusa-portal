@@ -86,6 +86,36 @@ mkdocs serve
 mkdocs build --strict
 ```
 
+### 埋め込みアプリ（viewer/）
+
+`viewer/` のアプリは `docs/apps/` に置いたビルド成果物を各ページから読み込みます。ソースを直したら、ビルドして成果物を差し替えます（GitHub Actions は MkDocs だけを実行するため、成果物のコミットが必要です）。
+
+```shell
+cd viewer
+npm install          # 初回のみ
+npm run dev          # 開発用サーバー（http://localhost:5173/）
+npm run build        # 型検査・コントラスト検査のうえ viewer/dist/ に出力
+cd ..
+rm -rf docs/apps/assets
+cp -r viewer/dist/assets docs/apps/assets
+cp viewer/dist/index.html viewer/dist/map.html docs/apps/
+```
+
+見た目に関わる値は、次のファイルだけが持ちます。表示側（コンポーネント・CSS）は必ずこれらを参照し、色コードや数値を直接書きません。
+
+| 変えたいもの | 編集するファイル |
+| --- | --- |
+| 色 | [viewer/src/theme/palette.ts](viewer/src/theme/palette.ts) |
+| 書体・余白・角丸・寸法 | [viewer/src/theme/tokens.ts](viewer/src/theme/tokens.ts) |
+| グラフの寸法・軸・ラベル | [viewer/src/config/charts.ts](viewer/src/config/charts.ts) |
+| 指標の一覧・単位・表示件数 | [viewer/src/config/metrics.ts](viewer/src/config/metrics.ts) |
+| 画面の文言 | [viewer/src/config/messages.ts](viewer/src/config/messages.ts) |
+| データ ID の日本語名 | [viewer/src/config/labels.ts](viewer/src/config/labels.ts) |
+| 相関図の配置・ノード・領域 | [viewer/src/map/config.ts](viewer/src/map/config.ts) |
+| ページ側の埋め込み枠 | [docs/stylesheets/portal.css](docs/stylesheets/portal.css) |
+
+値の組み立て（単位の付与・注記の生成・高さの計算など）は [viewer/src/lib/display.ts](viewer/src/lib/display.ts)（相関図は [viewer/src/map/display.ts](viewer/src/map/display.ts)）に集約しています。
+
 ## Pull Request のビルド確認
 
 Pull Request の内容は、GitHub Actions から手動でビルドし、Cloudflare Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
