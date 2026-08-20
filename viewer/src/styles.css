@@ -83,9 +83,15 @@ body {
   color: var(--header-text);
 }
 
-h1,
-h2 {
+h1 {
   font-size: var(--font-size-xl);
+  color: var(--heading-text);
+  margin: 0;
+}
+
+/* 節の見出し。本文より一段大きい程度に留める（記事の中で浮かせない） */
+h2 {
+  font-size: var(--font-size-lg);
   color: var(--heading-text);
   margin: 0;
 }
