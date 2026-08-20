@@ -32,10 +32,12 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
 ## ビューア
 
 <div class="app-embed">
-  <iframe src="../apps/index.html" title="Minecraft サーバー統計ビューア" loading="lazy"></iframe>
+  <iframe src="../apps/index.html?skin=minecraft" title="Minecraft サーバー統計ビューア" loading="lazy"></iframe>
 </div>
 
-[ビューアを単独で開く](../apps/index.html)
+[ビューアを単独で開く](../apps/index.html?skin=minecraft)
+
+このページのビューアはドット絵風の見た目（ドット書体・直角・緑のテーマ色）で表示しています。URL の `?skin=minecraft` を外すと[標準の見た目](../apps/index.html)になります。
 
 ## データについての注意
 
@@ -49,5 +51,6 @@ Minecraft サーバーの統計 JSON を可視化するビューアです。Reac
 | --- | --- |
 | 実装 | React 19 + Recharts 3（TypeScript / Vite）。ソースは `viewer/` |
 | 配置 | `docs/apps/index.html`（相関図と共通のビルド成果物） |
+| 見た目 | ドット絵風（`?skin=minecraft`）。プリセットは `viewer/src/config/skins.ts` |
 | データ | `data/minecraft-stats-20260818.json`（取得元のAWS情報とプレイヤーUUIDは伏字）をビルド時に取り込み |
 | 出典 | ビューアの実装と統計は `aws_minecraft` リポジトリ由来。以降はこのリポジトリで管理 |

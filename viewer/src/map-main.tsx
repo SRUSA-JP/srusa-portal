@@ -1,11 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MapPage } from './pages/MapPage';
+import { setActiveSkin, skinFromLocation } from './config/skins';
 import { setupEmbed } from './embed';
 import './styles.css';
 
 const container = document.getElementById('root')!;
-/* 記事に埋め込まれているかは描画前に決める（枠付きの見た目が一瞬出ないように） */
+/* 見た目のプリセットと埋め込みの扱いは描画前に決める（切り替わる様子を見せない） */
+setActiveSkin(skinFromLocation());
 setupEmbed(container);
 
 createRoot(container).render(

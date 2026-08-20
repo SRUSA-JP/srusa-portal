@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { activeSkin, applySkin } from '../config/skins';
 import { hostBackgroundColor } from '../embed';
 import { applyDesignTokens } from './cssVariables';
 import { hostTheme, observeHostTheme } from './hostTheme';
@@ -23,6 +24,7 @@ function detect(): ThemeMode {
  * 埋め込み先（MkDocs ページ）のナイトモード切り替え、OS の配色設定、
  * どちらの変化にも追随する。記事に埋め込まれているときは地の色も
  * 埋め込み先から借りて、グラフの面だけ色が違って見えないようにする。
+ * そのページのスキン（config/skins.ts）による色の差し替えもここで重ねる。
  * 色とトークンは CSS カスタムプロパティとしても流し込むので、
  * CSS 側に実値を書く必要がない。
  */
@@ -51,15 +53,16 @@ export function useVizTheme(): VizTheme {
     };
   }, []);
 
+  const skin = activeSkin();
   const theme = useMemo<VizTheme>(() => {
-    const base = mode === 'dark' ? DARK_THEME : LIGHT_THEME;
+    const base = applySkin(mode === 'dark' ? DARK_THEME : LIGHT_THEME, skin);
     if (!hostBackground) return base;
     return { ...base, background: hostBackground, surface: hostBackground };
-  }, [mode, hostBackground]);
+  }, [mode, hostBackground, skin]);
 
   useEffect(() => {
-    applyDesignTokens(theme);
-  }, [theme]);
+    applyDesignTokens(theme, skin);
+  }, [theme, skin]);
 
   return theme;
 }

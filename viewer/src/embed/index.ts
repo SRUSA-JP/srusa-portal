@@ -12,6 +12,7 @@
  * 唯一の定義なので、変えるときは両方をそろえる。
  */
 
+import { activeSkin, DEFAULT_SKIN } from '../config/skins';
 import { parseCssColor } from '../theme/palette';
 
 /** 高さを知らせるメッセージの種別。 */
@@ -113,10 +114,14 @@ function stopScrollingWhenManaged(): void {
 /**
  * 埋め込み先の本文の書体を借りる。
  *
+ * 記事の本文と地続きに見せるため。ただし、そのページのスキンが自前の
+ * 書体を持つ場合（ドット絵風など）は、その書体を優先して借りない。
+ *
  * 同一オリジンのときだけ読める。読めなければアプリ既定の書体のまま。
  * トークンは documentElement に流し込まれるので、上書きは body に置く。
  */
 function adoptHostFont(): void {
+  if (activeSkin().font.family !== DEFAULT_SKIN.font.family) return;
   try {
     const hostBody = window.parent.document.body;
     if (!hostBody) return;

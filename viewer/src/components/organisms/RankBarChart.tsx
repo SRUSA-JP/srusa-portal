@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { AXIS, BAR, CHART_HEIGHT, CHART_MARGIN, GRID_DASH } from '../../config/charts';
 import { figureColors } from '../../config/colors';
+import { skinnedFontSize, skinnedRadius } from '../../config/skins';
 import type { Entry } from '../../lib/selectors';
 import { formatValue, formatWithUnit } from '../../lib/display';
 import { formatCompact } from '../../lib/format';
@@ -64,7 +65,7 @@ export function RankBarChart({
               type="number"
               tickFormatter={formatCompact}
               stroke={colors.grid}
-              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+              tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
             />
             <YAxis
               type="category"
@@ -72,7 +73,7 @@ export function RankBarChart({
               width={AXIS.categoryWidth}
               interval={0}
               stroke={colors.grid}
-              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+              tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
             />
           </>
         ) : (
@@ -81,7 +82,7 @@ export function RankBarChart({
               type="category"
               dataKey="label"
               stroke={colors.grid}
-              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+              tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
               interval={0}
               angle={AXIS.tickAngle}
               textAnchor="end"
@@ -91,7 +92,7 @@ export function RankBarChart({
               type="number"
               tickFormatter={formatCompact}
               stroke={colors.grid}
-              tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+              tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
             />
           </>
         )}
@@ -111,8 +112,8 @@ export function RankBarChart({
           dataKey="value"
           radius={
             horizontal
-              ? [0, BAR.radius, BAR.radius, 0]
-              : [BAR.radius, BAR.radius, 0, 0]
+              ? [0, skinnedRadius(BAR.radius), skinnedRadius(BAR.radius), 0]
+              : [skinnedRadius(BAR.radius), skinnedRadius(BAR.radius), 0, 0]
           }
           isAnimationActive={false}
         >
@@ -124,7 +125,7 @@ export function RankBarChart({
             dataKey="value"
             position={horizontal ? 'right' : 'top'}
             fill={colors.axis}
-            fontSize={AXIS.fontSize}
+            fontSize={skinnedFontSize(AXIS.fontSize)}
             formatter={(value) =>
               Number(value) === max ? formatWithUnit(Number(value), unit) : formatValue(Number(value))
             }

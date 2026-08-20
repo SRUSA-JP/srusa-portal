@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, SCATTER, VALUE_LABEL } from '../../config/charts';
 import { figureColors } from '../../config/colors';
+import { skinnedFontSize } from '../../config/skins';
 import type { ScatterPoint } from '../../lib/selectors';
 import { axisTitle } from '../../lib/display';
 import { formatCompact, formatDecimal } from '../../lib/format';
@@ -54,14 +55,14 @@ export function MetricScatter({
           dataKey="x"
           name={xLabel}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
           tickFormatter={formatCompact}
           label={{
             value: axisTitle(xLabel, xUnit),
             position: 'insideBottom',
             offset: AXIS.titleOffset,
             fill: colors.axis,
-            fontSize: AXIS.fontSize,
+            fontSize: skinnedFontSize(AXIS.fontSize),
           }}
         />
         <YAxis
@@ -69,14 +70,14 @@ export function MetricScatter({
           dataKey="y"
           name={yLabel}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
           tickFormatter={formatCompact}
           label={{
             value: axisTitle(yLabel, yUnit),
             angle: AXIS.titleAngleY,
             position: 'insideLeft',
             fill: colors.axis,
-            fontSize: AXIS.fontSize,
+            fontSize: skinnedFontSize(AXIS.fontSize),
           }}
         />
         <ZAxis range={[SCATTER.pointArea, SCATTER.pointArea]} />
@@ -111,7 +112,7 @@ export function MetricScatter({
               position="top"
               offset={VALUE_LABEL.offset}
               fill={colors.axis}
-              fontSize={VALUE_LABEL.fontSize}
+              fontSize={skinnedFontSize(VALUE_LABEL.fontSize)}
               formatter={(value) => formatDecimal(Number(value))}
             />
           )}
@@ -120,7 +121,7 @@ export function MetricScatter({
             position="bottom"
             offset={VALUE_LABEL.offset}
             fill={colors.axis}
-            fontSize={VALUE_LABEL.captionFontSize}
+            fontSize={skinnedFontSize(VALUE_LABEL.captionFontSize)}
           />
         </Scatter>
       </ScatterChart>

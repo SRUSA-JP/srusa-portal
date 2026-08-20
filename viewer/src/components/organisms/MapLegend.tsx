@@ -1,3 +1,4 @@
+import { skinnedFontSize } from '../../config/skins';
 import { Swatch } from '../atoms';
 import { LEGEND } from '../../map/config';
 import { groupLabel, groupTypeLabel, regionStyle } from '../../map/display';
@@ -24,7 +25,7 @@ export function MapLegend({ regions, theme, highlightedGroupId, onHighlight }: M
     <div className="legend">
       {[...byType.entries()].map(([type, group]) => (
         <div key={type} className="legend-group">
-          <span className="legend-title" style={{ fontSize: LEGEND.fontSize }}>
+          <span className="legend-title" style={{ fontSize: skinnedFontSize(LEGEND.fontSize) }}>
             {groupTypeLabel(type)}
           </span>
           <div className="legend-items">
@@ -38,7 +39,7 @@ export function MapLegend({ regions, theme, highlightedGroupId, onHighlight }: M
                   className={active ? 'legend-item active' : 'legend-item'}
                   aria-pressed={active}
                   onClick={() => onHighlight(active ? '' : region.group.id)}
-                  style={{ fontSize: LEGEND.fontSize, color: style.labelColor }}
+                  style={{ fontSize: skinnedFontSize(LEGEND.fontSize), color: style.labelColor }}
                 >
                   <Swatch
                     className="legend-swatch"

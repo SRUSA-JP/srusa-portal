@@ -2,14 +2,24 @@
  * 画面に出る文字色が背景とのコントラスト比を満たすかを検査する。
  *
  * 色は theme/palette.ts の関数だけが決める決まりなので、ここではその出力を検証する。
- * 配色やしきい値を変えたら `npm run check:contrast` を通すこと。
+ * 見た目のプリセット（config/skins.ts）は色を差し替えるので、スキンごとに検査する。
+ * 配色・しきい値・スキンを変えたら `npm run check:contrast` を通すこと。
  */
 import {
   CONTRAST_MIN_LARGE, CONTRAST_MIN_TEXT, DARK_THEME, LIGHT_THEME,
   chartText, contrastRatio, readableTextOn, tooltipSurface,
 } from '../src/theme/palette';
 import { GROUP_TYPE_SETTINGS } from '../src/map/config';
+import { SKINS, applySkin } from '../src/config/skins';
 import { edgeStyle, nodeStyle, regionStyle } from '../src/map/display';
+
+/** 検査する配色の組み合わせ（スキン × ライト / ダーク）。 */
+const cases = SKINS.flatMap((skin) =>
+  [LIGHT_THEME, DARK_THEME].map((theme) => ({
+    label: `${skin.label} / ${theme.mode}`,
+    theme: applySkin(theme, skin),
+  })),
+);
 
 let failed = 0;
 const check = (name: string, fg: string, bg: string, min: number) => {
@@ -19,8 +29,8 @@ const check = (name: string, fg: string, bg: string, min: number) => {
   console.log(`${ok ? 'OK ' : 'NG '} ${name.padEnd(42)} ${ratio.toFixed(2)} (下限 ${min})`);
 };
 
-for (const theme of [LIGHT_THEME, DARK_THEME]) {
-  console.log(`\n--- ${theme.mode} ---`);
+for (const { label, theme } of cases) {
+  console.log(`\n--- ${label} ---`);
   const tip = tooltipSurface(theme);
   check('ツールチップ 見出し / 背景', tip.titleColor, tip.background, CONTRAST_MIN_TEXT);
   check('ツールチップ 本文 / 背景', tip.textColor, tip.background, CONTRAST_MIN_TEXT);
@@ -33,8 +43,8 @@ for (const theme of [LIGHT_THEME, DARK_THEME]) {
 }
 
 /* 相関図: 領域・ノード・関係線の色も同じ基準で検査する */
-for (const theme of [LIGHT_THEME, DARK_THEME]) {
-  console.log(`\n--- 相関図 / ${theme.mode} ---`);
+for (const { label, theme } of cases) {
+  console.log(`\n--- 相関図 / ${label} ---`);
   for (const type of Object.keys(GROUP_TYPE_SETTINGS)) {
     const group = { id: type, name: type, type };
     const style = regionStyle(group, theme, false);

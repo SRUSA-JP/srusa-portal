@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, LEGEND, LINE, VALUE_LABEL } from '../../config/charts';
 import { figureColors } from '../../config/colors';
+import { skinnedFontSize } from '../../config/skins';
 import type { StackedSeries } from '../../lib/selectors';
 import { formatValue, formatWithUnit } from '../../lib/display';
 import { formatCompact } from '../../lib/format';
@@ -48,13 +49,13 @@ export function TrendLineChart({
         <XAxis
           dataKey={categoryKey}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
           interval={0}
         />
         <YAxis
           tickFormatter={formatCompact}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
         />
         <Tooltip
           cursor={{ stroke: colors.grid, fill: colors.cursor }}
@@ -74,7 +75,7 @@ export function TrendLineChart({
         />
         {multiSeries && (
           <Legend
-            wrapperStyle={{ color: colors.axis, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
+            wrapperStyle={{ color: colors.axis, fontSize: skinnedFontSize(LEGEND.fontSize), paddingTop: LEGEND.paddingTop }}
           />
         )}
         {data.series.map((series) => (
@@ -100,7 +101,7 @@ export function TrendLineChart({
                 position="top"
                 offset={VALUE_LABEL.offset}
                 fill={colors.axis}
-                fontSize={VALUE_LABEL.fontSize}
+                fontSize={skinnedFontSize(VALUE_LABEL.fontSize)}
                 formatter={(value) => formatValue(Number(value))}
               />
             )}

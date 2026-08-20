@@ -19,6 +19,7 @@ import {
   VALUE_LABEL,
 } from '../../config/charts';
 import { figureColors } from '../../config/colors';
+import { skinnedFontSize, skinnedRadius } from '../../config/skins';
 import type { StackedSeries } from '../../lib/selectors';
 import { formatValue, formatWithUnit } from '../../lib/display';
 import { formatCompact } from '../../lib/format';
@@ -71,7 +72,7 @@ export function SeriesBarChart({
         <XAxis
           dataKey={categoryKey}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
           interval={0}
           angle={AXIS.tickAngle}
           textAnchor="end"
@@ -80,7 +81,7 @@ export function SeriesBarChart({
         <YAxis
           tickFormatter={formatCompact}
           stroke={colors.grid}
-          tick={{ fill: colors.axis, fontSize: AXIS.fontSize }}
+          tick={{ fill: colors.axis, fontSize: skinnedFontSize(AXIS.fontSize) }}
         />
         <Tooltip
           cursor={{ fill: colors.cursor }}
@@ -99,7 +100,7 @@ export function SeriesBarChart({
           }
         />
         <Legend
-          wrapperStyle={{ color: colors.axis, fontSize: LEGEND.fontSize, paddingTop: LEGEND.paddingTop }}
+          wrapperStyle={{ color: colors.axis, fontSize: skinnedFontSize(LEGEND.fontSize), paddingTop: LEGEND.paddingTop }}
         />
         {data.series.map((series, index) => (
           <Bar
@@ -113,7 +114,7 @@ export function SeriesBarChart({
             strokeWidth={stacked ? BAR.stackGap : 0}
             radius={
               stacked && index === data.series.length - 1
-                ? [BAR.radius, BAR.radius, 0, 0]
+                ? [skinnedRadius(BAR.radius), skinnedRadius(BAR.radius), 0, 0]
                 : undefined
             }
             isAnimationActive={false}
@@ -123,7 +124,7 @@ export function SeriesBarChart({
               position={stacked ? 'center' : 'top'}
               /* 積み上げは色面の上に載るので、その塗りに対して読める色を都度求める */
               fill={stacked ? colors.labelOn(color(series.key)) : colors.axis}
-              fontSize={VALUE_LABEL.fontSize}
+              fontSize={skinnedFontSize(VALUE_LABEL.fontSize)}
               formatter={(value) => {
                 const numeric = Number(value);
                 if (!numeric) return '';

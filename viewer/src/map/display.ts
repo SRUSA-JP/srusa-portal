@@ -13,6 +13,7 @@
  */
 import { CONTRAST_MIN_LARGE, CONTRAST_MIN_TEXT, ensureContrast, withAlpha, type VizTheme } from '../theme/palette';
 import { figureColors } from '../config/colors';
+import { skinnedFontSize } from '../config/skins';
 import { MAP_TEXT } from '../config/messages';
 import { AVATAR, EDGE, NODE, REGION, groupTypeSetting } from './config';
 import type { Group, Person, Relation } from './schema';
@@ -90,7 +91,7 @@ export function regionStyle(group: Group, theme: VizTheme, highlighted: boolean)
     labelColor: ensureContrast(base, colors.background, CONTRAST_MIN_TEXT),
     strokeWidth: REGION.strokeWidth,
     cornerRadius: REGION.cornerRadius,
-    labelFontSize: REGION.labelFontSize,
+    labelFontSize: skinnedFontSize(REGION.labelFontSize),
     labelOffsetY: REGION.labelOffsetY,
     labelFontWeight: REGION.labelFontWeight,
   };
@@ -146,7 +147,7 @@ export function nodeStyle(theme: VizTheme, state: NodeState): NodeStyle {
       : state.isCenter || state.isRelated
         ? colors.strongText
         : colors.axis,
-    labelFontSize: NODE.labelFontSize,
+    labelFontSize: skinnedFontSize(NODE.labelFontSize),
     labelOffsetY: size / 2 + NODE.labelOffsetY,
     labelFontWeight: state.isCenter ? NODE.centerLabelFontWeight : NODE.labelFontWeight,
   };

@@ -71,6 +71,7 @@ body {
   padding: var(--space-xxxl) var(--space-xxl) var(--space-page);
 }
 
+/* 画面上部の帯（見出しと操作の並び） */
 .app-head {
   display: flex;
   flex-wrap: wrap;
@@ -78,11 +79,14 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--space-xl);
+  background: var(--header-background);
+  color: var(--header-text);
 }
 
 h1,
 h2 {
   font-size: var(--font-size-xl);
+  color: var(--heading-text);
   margin: 0;
 }
 
@@ -305,6 +309,24 @@ td.right {
 
 .recharts-surface {
   overflow: visible;
+}
+
+/*
+ * ドット絵風のスキン（config/skins.ts の crispEdges）。
+ *
+ * 書体・角丸・線の太さ・色はカスタムプロパティ経由で差し替わるので、
+ * ここでは「輪郭をぼかさない」ことだけを指定する。文字はぼかさないと
+ * 読めなくなるので、図形（棒・線・領域）にだけ効かせる。
+ */
+[data-skin='minecraft'] svg path,
+[data-skin='minecraft'] svg rect,
+[data-skin='minecraft'] svg line,
+[data-skin='minecraft'] svg circle {
+  shape-rendering: crispEdges;
+}
+
+[data-skin='minecraft'] img {
+  image-rendering: pixelated;
 }
 
 /* 絞り込みの数値入力 */

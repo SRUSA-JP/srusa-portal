@@ -1,6 +1,7 @@
 import { TOOLTIP } from '../../config/charts';
 import { Swatch } from '../atoms';
 import { figureColors } from '../../config/colors';
+import { skinnedFontSize, skinnedRadius } from '../../config/skins';
 import { FONT_WEIGHT } from '../../theme/tokens';
 import type { VizTheme } from '../../theme/palette';
 
@@ -36,9 +37,9 @@ export function ChartTooltip({ theme, title, rows }: ChartTooltipProps) {
       style={{
         background: surface.background,
         border: `${TOOLTIP.borderWidth}px solid ${surface.border}`,
-        borderRadius: TOOLTIP.radius,
+        borderRadius: skinnedRadius(TOOLTIP.radius),
         padding: `${TOOLTIP.padding.y}px ${TOOLTIP.padding.x}px`,
-        fontSize: TOOLTIP.fontSize,
+        fontSize: skinnedFontSize(TOOLTIP.fontSize),
         color: surface.textColor,
         display: 'grid',
         gap: TOOLTIP.rowGap,
@@ -60,7 +61,7 @@ export function ChartTooltip({ theme, title, rows }: ChartTooltipProps) {
           {row.color && (
             <Swatch
               size={TOOLTIP.swatch.size}
-              radius={TOOLTIP.swatch.radius}
+              radius={skinnedRadius(TOOLTIP.swatch.radius)}
               background={surface.seriesColor(row.color)}
             />
           )}

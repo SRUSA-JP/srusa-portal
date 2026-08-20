@@ -17,24 +17,31 @@ export const FONT_FAMILY = {
   numeric: "ui-monospace, SFMono-Regular, Menlo, 'Hiragino Sans', 'Noto Sans JP', monospace",
 } as const;
 
-/** 文字の大きさ（px）。 */
+/**
+ * 文字の大きさ（px）。
+ *
+ * 記事に埋め込んで本文と並ぶので、本文（base）は読みやすい大きさに取る。
+ * グラフの中の文字（xxs〜sm）は数が多く重なりやすいので、本文より小さい。
+ * 全体を大きく／小さくしたいときは、この表だけを書き換える
+ * （ページごとの調整は config/skins.ts の fontScale）。
+ */
 export const FONT_SIZE = {
   /** 図中の添え字（点の名前など、最小の注記）。 */
-  xxs: 10,
+  xxs: 11,
   /** 補足・データラベル。 */
-  xs: 11,
+  xs: 12,
   /** ラベル・凡例・軸。 */
-  sm: 12,
+  sm: 13,
   /** 表・小見出し。 */
-  md: 13,
+  md: 14,
   /** 本文。 */
-  base: 14,
+  base: 16,
   /** カード見出し。 */
-  lg: 15,
+  lg: 17,
   /** 画面見出し。 */
-  xl: 20,
+  xl: 22,
   /** 指標の数値。 */
-  display: 22,
+  display: 26,
 } as const;
 
 /** 文字の太さ。 */

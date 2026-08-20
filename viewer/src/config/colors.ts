@@ -2,12 +2,17 @@
  * 色の割り当て。
  *
  * 「どの部品にどの色を使うか」は、この 1 ファイルだけが決める。
- * グラフの軸・棒・点も、プルダウンやボタンといった画面部品も、
+ * グラフの軸・棒・点も、背景・ヘッダー・プルダウンといった画面部品も、
  * ここの 1 行を書き換えれば全画面の色が変わる。
  *
  * 色そのもの（実際の色コード）とコントラストの計算は theme/palette.ts。
  * このファイルは palette が用意した色を部品に結びつけるだけで、
  * 色コードを持たない。
+ *
+ * 同じ色を何度も書かないよう、間に「役割」を挟む。
+ *   色（theme） → 役割（ROLE） → 部品（PART_COLORS / figureColors）
+ * 部品を増やすときは PART_COLORS に 1 行足すだけでよく、
+ * 配色を変えるときは theme/palette.ts だけを触ればよい。
  *
  * - グラフ・相関図 → `figureColors()` が返す色をコンポーネントが使う
  * - 画面部品      → `uiCssVariables()` が CSS カスタムプロパティとして流し込む
@@ -24,6 +29,116 @@ import {
   type VizTheme,
 } from '../theme/palette';
 
+/* ------------------------------------------------------------------ *
+ * 役割
+ * ------------------------------------------------------------------ */
+
+/**
+ * 色の役割。
+ *
+ * 画面に出る色はすべてこのどれかに属する。部品は色ではなく役割を指す。
+ */
+export type ColorRole =
+  /** ページの地。 */
+  | 'background'
+  /** カード・グラフの面。 */
+  | 'surface'
+  /** ボタンや入力欄など、面から一段持ち上げるもの。 */
+  | 'raised'
+  /** 枠線・区切り線。 */
+  | 'border'
+  /** 本文の文字。 */
+  | 'text'
+  /** 補足の文字。 */
+  | 'muted'
+  /** 選択状態・強調。 */
+  | 'accent'
+  /** 強調色の上に載る文字。 */
+  | 'onAccent'
+  /** エラー表示。 */
+  | 'danger'
+  /** グラフの目盛り線。 */
+  | 'grid';
+
+/** 役割 → 色。役割ごとの実際の色はここだけが決める。 */
+function roleColors(theme: VizTheme): Record<ColorRole, string> {
+  return {
+    background: theme.background,
+    surface: theme.surface,
+    raised: theme.surfaceRaised,
+    border: theme.border,
+    text: theme.textPrimary,
+    muted: theme.textSecondary,
+    accent: theme.accent,
+    onAccent: readableTextOn(theme.accent, theme, CONTRAST_MIN_TEXT),
+    danger: theme.danger,
+    grid: theme.grid,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * 画面部品の色
+ * ------------------------------------------------------------------ */
+
+/**
+ * 部品 → 役割。
+ *
+ * styles.css はここに並ぶ名前を `var(--部品名)` で参照する。
+ * 部品の色を変えたいときは、その行の役割を差し替える。
+ * 役割そのものの色を変えたいときは theme/palette.ts を触る。
+ */
+export const PART_COLORS: Record<string, ColorRole> = {
+  /* ページ全体 */
+  'page-background': 'background',
+  'page-text': 'text',
+  'muted-text': 'muted',
+  divider: 'border',
+  'error-text': 'danger',
+
+  /* 画面上部の帯（見出しと操作の並び） */
+  'header-background': 'background',
+  'header-text': 'text',
+
+  /* 見出し */
+  'heading-text': 'text',
+
+  /* 操作部品（プルダウン・ボタン・数値入力） */
+  'control-background': 'raised',
+  'control-text': 'text',
+  'control-border': 'border',
+  'control-border-hover': 'accent',
+  'control-selected': 'accent',
+  'control-selected-text': 'onAccent',
+  'focus-ring': 'accent',
+
+  /* 表 */
+  'table-border': 'border',
+  'table-header-background': 'surface',
+  'table-header-text': 'muted',
+
+  /* 相関図の凡例 */
+  'legend-background': 'raised',
+  'legend-border': 'border',
+  'legend-active-border': 'accent',
+};
+
+/**
+ * 部品ごとの色を CSS カスタムプロパティにする。
+ *
+ * 対応表（PART_COLORS）から機械的に作るので、部品が増えても
+ * ここを直す必要はない。
+ */
+export function uiCssVariables(theme: VizTheme): Record<string, string> {
+  const colors = roleColors(theme);
+  return Object.fromEntries(
+    Object.entries(PART_COLORS).map(([part, role]) => [`--${part}`, colors[role]]),
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * 図（グラフ・相関図）の色
+ * ------------------------------------------------------------------ */
+
 /**
  * カテゴリ配色の使い方。
  *
@@ -34,10 +149,6 @@ export const COLOR_SLOTS = {
   /** 単一系列のグラフ・強調表示。 */
   primary: 0,
 } as const;
-
-/* ------------------------------------------------------------------ *
- * 図（グラフ・相関図）の色
- * ------------------------------------------------------------------ */
 
 export interface FigureColors {
   /** 軸・目盛り・凡例・データラベルの文字。 */
@@ -76,66 +187,22 @@ export interface FigureColors {
  * 図の各部の色。
  *
  * コンポーネントはここが返した色だけを使い、テーマの色を直接読まない。
+ * 面と文字は画面部品と同じ役割を使うので、配色を変えれば両方に効く。
  */
 export function figureColors(theme: VizTheme): FigureColors {
+  const roles = roleColors(theme);
   return {
     axis: chartText(theme),
     strongText: chartText(theme, 'primary'),
-    grid: theme.grid,
+    grid: roles.grid,
     cursor: cursorFill(theme),
     primary: theme.categorical[COLOR_SLOTS.primary % theme.categorical.length],
     dimmed: mutedFill(theme),
-    background: theme.surface,
-    separator: theme.surface,
+    background: roles.surface,
+    separator: roles.surface,
     series: (keys) => colorScale(keys, theme),
     slot: (index) => theme.categorical[index % theme.categorical.length],
     labelOn: (background, minRatio = CONTRAST_MIN_TEXT) => readableTextOn(background, theme, minRatio),
     tooltip: tooltipSurface(theme),
-  };
-}
-
-/* ------------------------------------------------------------------ *
- * 画面部品の色
- * ------------------------------------------------------------------ */
-
-/**
- * 部品ごとの色を CSS カスタムプロパティにする。
- *
- * styles.css はここで作られた名前だけを使う（生の配色 `--color-*` は使わない）。
- * プルダウンやボタンの色を変えたいときは、この表の該当行を書き換える。
- */
-export function uiCssVariables(theme: VizTheme): Record<string, string> {
-  return {
-    /* ページ全体 */
-    '--page-background': theme.background,
-    '--page-text': theme.textPrimary,
-    /* 補足・注記の文字 */
-    '--muted-text': theme.textSecondary,
-    /* 区切り線 */
-    '--divider': theme.border,
-    /* エラー表示 */
-    '--error-text': theme.danger,
-
-    /* 操作部品（プルダウン・ボタン・数値入力） */
-    '--control-background': theme.surfaceRaised,
-    '--control-text': theme.textPrimary,
-    '--control-border': theme.border,
-    /* ポインタを載せたとき */
-    '--control-border-hover': theme.accent,
-    /* 選択中（タブ・切り替えボタン） */
-    '--control-selected': theme.accent,
-    '--control-selected-text': readableTextOn(theme.accent, theme, CONTRAST_MIN_TEXT),
-    /* キーボード操作の位置表示 */
-    '--focus-ring': theme.accent,
-
-    /* 表 */
-    '--table-border': theme.border,
-    '--table-header-background': theme.surface,
-    '--table-header-text': theme.textSecondary,
-
-    /* 相関図の凡例 */
-    '--legend-background': theme.surfaceRaised,
-    '--legend-border': theme.border,
-    '--legend-active-border': theme.accent,
   };
 }
