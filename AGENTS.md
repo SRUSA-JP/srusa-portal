@@ -17,7 +17,9 @@
 - コンテンツは `docs/` 配下に置き、登山部は `docs/mountaineering/` 配下で管理します。
 - Python 依存関係は `requirements.txt` でバージョンを固定します。
 - 標準の開発環境には `.devcontainer/` の Dev Container を使用します。Zed と VS Code のどちらからでも利用できる構成を維持します。
-- `main` ブランチの内容は `.github/workflows/deploy-pages.yml` でビルドし、GitHub Pages へデプロイします。
+- Cloudflare Pages の GitHub 連携を使用し、`main` ブランチを本番へ自動デプロイします。
+- Cloudflare Pages での公開確認が完了するまでは、`.github/workflows/deploy-pages.yml` による既存の GitHub Pages デプロイも維持します。
+- ローカル、GitHub Actions、Cloudflare Pages の Python バージョンは `.python-version` と Dev Container で 3.11 にそろえます。
 
 ### 未決事項
 

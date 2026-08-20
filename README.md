@@ -14,7 +14,8 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - テーマには Material for MkDocs を使用する
 - コンテンツは `docs/` 配下、登山部のページは `docs/mountaineering/` 配下に置く
 - Python 依存関係は `requirements.txt` でバージョンを固定する
-- `main` ブランチの内容を GitHub Actions でビルドし、GitHub Pages へ公開する
+- Cloudflare Pages の GitHub 連携を使い、`main` ブランチの内容を自動でビルド・公開する
+- Cloudflare Pages での公開確認が完了するまでは、既存の GitHub Pages も維持する
 
 ## 未決事項
 
@@ -31,6 +32,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [.gitignore](.gitignore): ローカル環境、生成物、秘密情報の除外設定
 - [mkdocs.yml](mkdocs.yml): サイト名、テーマ、ナビゲーションなどの MkDocs 設定
 - [requirements.txt](requirements.txt): Python 依存関係と固定バージョン
+- [.python-version](.python-version): ローカル、GitHub Actions、Cloudflare Pages で使用する Python のバージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
 - [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml): GitHub Pages へのビルド・デプロイ設定
@@ -81,7 +83,46 @@ mkdocs serve
 mkdocs build --strict
 ```
 
-## デプロイ
+## Cloudflare Pages へのデプロイ
+
+Cloudflare Pages と GitHub を連携し、`main` ブランチへの push を自動でビルド・公開します。Cloudflare の API トークンは使用しないため、リポジトリや GitHub Actions に Cloudflare の認証情報を保存する必要はありません。
+
+### 初回設定
+
+Cloudflare ダッシュボードの `Workers & Pages` から Pages アプリケーションを作成し、GitHub 上のこのリポジトリを接続します。GitHub へのアクセス権は、可能であればこのリポジトリだけに限定します。
+
+ビルド設定には次の値を指定します。
+
+| 項目 | 設定値 |
+| --- | --- |
+| Project name | `srusa-portal` |
+| Production branch | `main` |
+| Framework preset | なし |
+| Build command | `python -m pip install -r requirements.txt && mkdocs build --strict` |
+| Build output directory | `site` |
+| Root directory | 空欄（リポジトリのルート） |
+
+Python のバージョンは、リポジトリ直下の `.python-version` により `3.11` に固定されます。現在のビルドには環境変数や Secret は不要です。
+
+`Save and Deploy` を実行すると、最初のデプロイ後に `https://srusa-portal.pages.dev/` 形式のURLが発行されます。実際のURLは、Cloudflare Pages のデプロイ画面で確認してください。
+
+### 公開後の確認
+
+次を確認してから、Cloudflare Pages を正式な公開先として扱います。
+
+1. ホームと登山部のページが表示される
+2. 活動記録ページへ移動できる
+3. ヤマレコの埋め込み地図が表示される
+4. GitHub の別ブランチまたは Pull Request からプレビューが作成される
+5. Cloudflare のビルドログで `mkdocs build --strict` が成功している
+
+Cloudflare Pages のプレビューURLは初期状態では公開されます。将来 Cloudflare Access を導入する場合は、本番URLだけでなくプレビューURLの公開範囲も設定します。
+
+### 切り戻し
+
+Cloudflare Pages のデプロイに問題がある場合は、`Deployments` から直前の正常な本番デプロイへロールバックします。Cloudflare側の確認が完了するまでは、既存のGitHub Pagesを停止しません。
+
+## 既存の GitHub Pages へのデプロイ
 
 初回のみ、GitHub のリポジトリ画面で `Settings` → `Pages` → `Build and deployment` → `Source` を開き、`GitHub Actions` を選択します。
 
@@ -93,7 +134,7 @@ mkdocs build --strict
 
 GitHub の `Actions` タブから手動実行することもできます。公開URLはデプロイジョブの `github-pages` environment に表示されます。
 
-公開後に問題が見つかった場合は、正常だった状態へ戻すコミットを `main` に反映し、ワークフローを再実行します。
+公開後に問題が見つかった場合は、正常だった状態へ戻すコミットを `main` に反映し、ワークフローを再実行します。Cloudflare Pages の公開確認後に GitHub Pages を停止する場合は、このワークフローの削除を別の変更として実施します。
 
 ## 実装順の提案
 
