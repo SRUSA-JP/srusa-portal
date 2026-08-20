@@ -7,11 +7,8 @@
  */
 
 :root {
-  /* 埋め込むアプリの高さ */
-  --portal-embed-height: 820px;
-  --portal-embed-height-tall: 900px;
-  --portal-embed-radius: 4px;
-  --portal-embed-border-width: 1px;
+  /* アプリの高さが伝わるまでの仮の高さ（docs/javascripts/portal.js が実寸に置き換える） */
+  --portal-embed-initial-height: 640px;
 }
 
 /* 幅・高さを指定して埋め込むもの（外部サービスの地図など） */
@@ -24,20 +21,16 @@
   max-width: 100%;
 }
 
-/* このリポジトリのアプリを埋め込む枠 */
-.app-embed {
-  overflow-x: auto;
-}
-
+/*
+ * このリポジトリのアプリを埋め込む枠。
+ *
+ * 記事の一部として読ませたいので、枠線・背景・内部スクロールを作らない。
+ * 高さは中身に合わせて docs/javascripts/portal.js が設定する。
+ */
 .app-embed iframe {
   display: block;
   width: 100%;
-  height: var(--portal-embed-height);
-  border: var(--portal-embed-border-width) solid var(--md-default-fg-color--lightest);
-  border-radius: var(--portal-embed-radius);
-  background: var(--md-default-bg-color);
-}
-
-.app-embed--tall iframe {
-  height: var(--portal-embed-height-tall);
+  height: var(--portal-embed-initial-height);
+  border: 0;
+  background: transparent;
 }

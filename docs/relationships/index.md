@@ -25,7 +25,7 @@ SRUSA のメンバー同士のつながりと、所属（学校・研究室・�
 
 ## 相関図
 
-<div class="app-embed app-embed--tall">
+<div class="app-embed">
   <iframe src="../apps/map.html" title="SRUSA 相関図" loading="lazy"></iframe>
 </div>
 

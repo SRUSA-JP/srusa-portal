@@ -23,6 +23,9 @@ theme:
 extra_css:
   - stylesheets/portal.css
 
+extra_javascript:
+  - javascripts/portal.js
+
 plugins:
   - search:
       lang: ja
