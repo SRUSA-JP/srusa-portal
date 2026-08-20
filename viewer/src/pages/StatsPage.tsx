@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { listDatasets, loadAllDatasets, loadDataset } from './data/datasets';
-import { checkTotals, parseStatsJson } from './data/parse';
-import type { StatsDocument } from './data/schema';
+import { listDatasets, loadAllDatasets, loadDataset } from '../data/datasets';
+import { checkTotals, parseStatsJson } from '../data/parse';
+import type { StatsDocument } from '../data/schema';
 import {
+  AppLayout,
+  Button,
   ChartCard,
+  FilterPanel,
   KpiGrid,
   KpiTile,
   MetricScatter,
+  Note,
   Picker,
   RankBarChart,
   SeriesBarChart,
   TrendLineChart,
-} from './components';
+} from '../components';
 import {
   BASIS_OPTIONS,
   BREAKDOWNS,
   LIMITS,
-  METRICS,
   PLAYER_COLUMN,
   SERIES_OPTIONS,
   STATS_TEXT,
@@ -24,7 +27,7 @@ import {
   type BreakdownId,
   type SeriesId,
   type TrendScope,
-} from './config';
+} from '../config';
 import {
   basisLabel,
   basisNote,
@@ -38,7 +41,7 @@ import {
   rankingChartHeight,
   seriesOption,
   unitFor,
-} from './lib/display';
+} from '../lib/display';
 import {
   damageSeries,
   deathCauseRanking,
@@ -61,12 +64,13 @@ import {
   type PlayerFilter,
   type RateBasis,
   type Snapshot,
-} from './lib/selectors';
-import { downloadJson, type Row } from './lib/export';
-import { formatDecimal, formatHours } from './lib/format';
-import { useVizTheme } from './theme/useThemeMode';
+} from '../lib/selectors';
+import { downloadJson, type Row } from '../lib/export';
+import { formatDecimal, formatHours } from '../lib/format';
+import { useVizTheme } from '../theme/useThemeMode';
 
-export function App() {
+/** Minecraft サーバー統計の画面。 */
+export function StatsPage() {
   const theme = useVizTheme();
   const datasets = useMemo(() => listDatasets(), []);
   const [datasetId, setDatasetId] = useState(datasets[0]?.id ?? '');
@@ -165,7 +169,6 @@ export function App() {
   };
   const rows = useMemo(() => filterRows(allRows, filter), [allRows, filter.metric, filter.min, filter.max]);
   const playerNames = useMemo(() => rows.map((row) => row.name), [rows]);
-  const filterOption = metricOption(filterMetric);
   const filtered = rows.length !== allRows.length;
   const mismatches = useMemo(() => (doc ? checkTotals(doc) : []), [doc]);
 
@@ -240,35 +243,28 @@ export function App() {
   );
 
   return (
-    <div className="app">
-      <header className="app-head">
-        <div>
-          <h1 className="app-title">{STATS_TEXT.title}</h1>
-          {doc && (
-            <p className="note">
-              {STATS_TEXT.source({
-                generatedOn: doc.generated_on,
-                version: doc.source.minecraft_version,
-                loader: doc.source.loader,
-                difficulty: doc.source.difficulty,
-                file: sourceLabel,
-              })}
-            </p>
-          )}
-        </div>
-        <div className="app-actions">
+    <AppLayout
+      title={STATS_TEXT.title}
+      note={
+        doc
+          ? STATS_TEXT.source({
+            generatedOn: doc.generated_on,
+            version: doc.source.minecraft_version,
+            loader: doc.source.loader,
+            difficulty: doc.source.difficulty,
+            file: sourceLabel,
+          })
+          : undefined
+      }
+      actions={
+        <>
           {datasets.length > 1 && (
-            <select
+            <Picker
+              label={STATS_TEXT.action.dataset}
               value={datasetId}
-              onChange={(event) => setDatasetId(event.target.value)}
-              aria-label={STATS_TEXT.action.dataset}
-            >
-              {datasets.map((dataset) => (
-                <option key={dataset.id} value={dataset.id}>
-                  {dataset.label}
-                </option>
-              ))}
-            </select>
+              options={datasets.map((dataset) => ({ value: dataset.id, label: dataset.label }))}
+              onChange={setDatasetId}
+            />
           )}
           <input
             ref={fileInput}
@@ -281,79 +277,56 @@ export function App() {
               event.target.value = '';
             }}
           />
-          <button type="button" className="ghost" onClick={() => fileInput.current?.click()}>
-            {STATS_TEXT.action.importJson}
-          </button>
-          <button
-            type="button"
-            className="ghost"
+          <Button label={STATS_TEXT.action.importJson} onClick={() => fileInput.current?.click()} />
+          <Button
+            label={STATS_TEXT.action.exportSummary}
             disabled={!doc}
             onClick={() =>
               doc && downloadJson(STATS_TEXT.file.summary(doc.generated_on), playerRows(doc))
             }
-          >
-            {STATS_TEXT.action.exportSummary}
-          </button>
-        </div>
-      </header>
-
-      {error && <p className="error">{STATS_TEXT.error.load(error)}</p>}
-      {mismatches.length > 0 && (
-        <p className="error">{STATS_TEXT.error.totalsMismatch(mismatches.map((m) => m.field))}</p>
-      )}
-
-      <main>
+          />
+        </>
+      }
+      messages={
+        <>
+          {error && <Note tone="error">{STATS_TEXT.error.load(error)}</Note>}
+          {mismatches.length > 0 && (
+            <Note tone="error">{STATS_TEXT.error.totalsMismatch(mismatches.map((m) => m.field))}</Note>
+          )}
+        </>
+      }
+      footer={
+        doc && (
+          <>
+            <span>
+              {STATS_TEXT.footer.source(
+                doc.source.path,
+                doc.source.retrieved_via,
+                doc.source.instance_id,
+              )}
+            </span>
+            <span>{doc.units.playtime}</span>
+          </>
+        )
+      }
+    >
         {!doc && !error && datasets.length === 0 && (
-          <p className="note">{STATS_TEXT.empty.noDataset}</p>
+          <Note>{STATS_TEXT.empty.noDataset}</Note>
         )}
-        {!doc && !error && datasets.length > 0 && <p className="note">{STATS_TEXT.empty.loading}</p>}
+        {!doc && !error && datasets.length > 0 && <Note>{STATS_TEXT.empty.loading}</Note>}
 
         {doc && (
           <>
-            <section className="card">
-              <header className="card-head">
-                <div>
-                  <h2>{STATS_TEXT.filter.title}</h2>
-                  <p className="note">{STATS_TEXT.filter.note(rows.length, allRows.length)}</p>
-                </div>
-                <div className="card-actions">
-                  <Picker
-                    label={STATS_TEXT.filter.metricPicker}
-                    value={filterMetric}
-                    options={METRICS}
-                    onChange={changeFilterMetric}
-                  />
-                  <label className="field">
-                    {STATS_TEXT.filter.min}
-                    <input
-                      type="number"
-                      step="any"
-                      value={filter.min}
-                      aria-label={STATS_TEXT.filter.minLabel(filterOption.label)}
-                      onChange={(event) =>
-                        setFilterBounds({ min: Number(event.target.value), max: filter.max })
-                      }
-                    />
-                  </label>
-                  <label className="field">
-                    {STATS_TEXT.filter.max}
-                    <input
-                      type="number"
-                      step="any"
-                      value={filter.max}
-                      aria-label={STATS_TEXT.filter.maxLabel(filterOption.label)}
-                      onChange={(event) =>
-                        setFilterBounds({ min: filter.min, max: Number(event.target.value) })
-                      }
-                    />
-                  </label>
-                  <span className="note">{filterOption.unit.trim()}</span>
-                  <button type="button" className="ghost" disabled={!filtered} onClick={() => setFilterBounds(null)}>
-                    {STATS_TEXT.filter.clear}
-                  </button>
-                </div>
-              </header>
-            </section>
+            <FilterPanel
+              metric={filterMetric}
+              onMetricChange={changeFilterMetric}
+              min={filter.min}
+              max={filter.max}
+              onBoundsChange={setFilterBounds}
+              onClear={() => setFilterBounds(null)}
+              shown={rows.length}
+              total={allRows.length}
+            />
 
             <KpiGrid>
               <KpiTile
@@ -406,7 +379,7 @@ export function App() {
                   height={rankingChartHeight(rankData.length)}
                 />
               ) : (
-                <p className="note">{STATS_TEXT.empty.noPlayers}</p>
+                <Note>{STATS_TEXT.empty.noPlayers}</Note>
               )}
             </ChartCard>
 
@@ -470,7 +443,7 @@ export function App() {
                   height={breakdownChartHeight(breakdownData.length)}
                 />
               ) : (
-                <p className="note">{STATS_TEXT.empty.noBreakdown}</p>
+                <Note>{STATS_TEXT.empty.noBreakdown}</Note>
               )}
             </ChartCard>
 
@@ -511,7 +484,7 @@ export function App() {
                   unit={unitFor(currentSeries.unit, seriesBasis)}
                 />
               ) : (
-                <p className="note">{STATS_TEXT.empty.noPlayers}</p>
+                <Note>{STATS_TEXT.empty.noPlayers}</Note>
               )}
             </ChartCard>
 
@@ -560,7 +533,7 @@ export function App() {
                   unit={unitFor(trendMetricOption.unit, trendBasis)}
                 />
               ) : (
-                <p className="note">{STATS_TEXT.empty.noSnapshots}</p>
+                <Note>{STATS_TEXT.empty.noSnapshots}</Note>
               )}
             </ChartCard>
 
@@ -607,7 +580,7 @@ export function App() {
               ]}
               csvName={STATS_TEXT.file.scatter(scatterX, scatterY, scatterBasis)}
             >
-              {scatterPoints.length === 0 && <p className="note">{STATS_TEXT.empty.noPlayers}</p>}
+              {scatterPoints.length === 0 && <Note>{STATS_TEXT.empty.noPlayers}</Note>}
               <MetricScatter
                 points={scatterPoints}
                 theme={theme}
@@ -619,20 +592,6 @@ export function App() {
             </ChartCard>
           </>
         )}
-      </main>
-
-      {doc && (
-        <footer className="app-foot">
-          <span>
-            {STATS_TEXT.footer.source(
-              doc.source.path,
-              doc.source.retrieved_via,
-              doc.source.instance_id,
-            )}
-          </span>
-          <span>{doc.units.playtime}</span>
-        </footer>
-      )}
-    </div>
+    </AppLayout>
   );
 }

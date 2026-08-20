@@ -1,7 +1,8 @@
-import { TOOLTIP } from '../config/charts';
-import { figureColors } from '../config/colors';
-import { FONT_WEIGHT } from '../theme/tokens';
-import type { VizTheme } from '../theme/palette';
+import { TOOLTIP } from '../../config/charts';
+import { Swatch } from '../atoms';
+import { figureColors } from '../../config/colors';
+import { FONT_WEIGHT } from '../../theme/tokens';
+import type { VizTheme } from '../../theme/palette';
 
 export interface TooltipRow {
   /** 行の見出し（系列名・軸名）。単一系列では省略できる。 */
@@ -57,15 +58,10 @@ export function ChartTooltip({ theme, title, rows }: ChartTooltipProps) {
           }}
         >
           {row.color && (
-            <span
-              aria-hidden
-              style={{
-                width: TOOLTIP.swatch.size,
-                height: TOOLTIP.swatch.size,
-                borderRadius: TOOLTIP.swatch.radius,
-                background: surface.seriesColor(row.color),
-                flex: '0 0 auto',
-              }}
+            <Swatch
+              size={TOOLTIP.swatch.size}
+              radius={TOOLTIP.swatch.radius}
+              background={surface.seriesColor(row.color)}
             />
           )}
           {row.label && <span>{row.label}</span>}

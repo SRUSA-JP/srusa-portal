@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MapApp } from './map/MapApp';
+import { MapPage } from './pages/MapPage';
 import { setupEmbed } from './embed';
 import './styles.css';
 
@@ -10,6 +10,6 @@ setupEmbed(container);
 
 createRoot(container).render(
   <StrictMode>
-    <MapApp />
+    <MapPage />
   </StrictMode>,
 );

@@ -1,6 +1,6 @@
-import { roundedPolygonPath } from '../geometry';
-import { groupLabel, groupTooltip, regionStyle } from '../display';
-import type { RegionPlacement } from '../layout';
+import { roundedPolygonPath } from '../../map/geometry';
+import { groupLabel, groupTooltip, regionStyle } from '../../map/display';
+import type { RegionPlacement } from '../../map/layout';
 import type { VizTheme } from '../../theme/palette';
 
 export interface GroupRegionProps {

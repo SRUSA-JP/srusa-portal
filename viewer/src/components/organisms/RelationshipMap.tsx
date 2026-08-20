@@ -1,10 +1,10 @@
 import { MAP_TEXT } from '../../config/messages';
-import { regionPaintOrder } from '../display';
-import type { MapLayout } from '../layout';
+import { regionPaintOrder } from '../../map/display';
+import type { MapLayout } from '../../map/layout';
 import type { VizTheme } from '../../theme/palette';
-import { GroupRegion } from './GroupRegion';
-import { PersonNode } from './PersonNode';
-import { RelationEdge } from './RelationEdge';
+import { GroupRegion } from '../molecules/GroupRegion';
+import { PersonNode } from '../molecules/PersonNode';
+import { RelationEdge } from '../molecules/RelationEdge';
 
 export interface RelationshipMapProps {
   layout: MapLayout;

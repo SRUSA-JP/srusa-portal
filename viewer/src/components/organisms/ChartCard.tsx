@@ -1,7 +1,9 @@
 import { useState, type ReactNode } from 'react';
-import { TABLE_TEXT } from '../config/messages';
+import { TABLE_TEXT } from '../../config/messages';
+import { Button } from '../atoms';
+import { SectionHeader } from '../molecules/SectionHeader';
 import { DataTable, type Column } from './DataTable';
-import type { Row } from '../lib/export';
+import type { Row } from '../../lib/export';
 
 export interface ChartCardProps {
   title: string;
@@ -24,20 +26,21 @@ export function ChartCard({ title, note, tableRows, tableColumns, csvName, actio
 
   return (
     <section className="card">
-      <header className="card-head">
-        <div>
-          <h2>{title}</h2>
-          {note && <p className="note">{note}</p>}
-        </div>
-        <div className="card-actions">
-          {actions}
-          {hasTable && (
-            <button type="button" className="ghost" onClick={() => setShowTable((v) => !v)}>
-              {showTable ? TABLE_TEXT.toggle.toChart : TABLE_TEXT.toggle.toTable}
-            </button>
-          )}
-        </div>
-      </header>
+      <SectionHeader
+        title={title}
+        note={note}
+        actions={
+          <>
+            {actions}
+            {hasTable && (
+              <Button
+                label={showTable ? TABLE_TEXT.toggle.toChart : TABLE_TEXT.toggle.toTable}
+                onClick={() => setShowTable((v) => !v)}
+              />
+            )}
+          </>
+        }
+      />
       {showTable && hasTable ? (
         <DataTable rows={tableRows!} columns={tableColumns} csvName={csvName ?? `${title}.csv`} />
       ) : (

@@ -1,6 +1,6 @@
-import { edgeStyle, relationLabel } from '../display';
-import { arcPath } from '../geometry';
-import type { EdgePlacement } from '../layout';
+import { edgeStyle, relationLabel } from '../../map/display';
+import { arcPath } from '../../map/geometry';
+import type { EdgePlacement } from '../../map/layout';
 import type { VizTheme } from '../../theme/palette';
 
 export interface RelationEdgeProps {

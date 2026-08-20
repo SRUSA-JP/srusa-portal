@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react';
-import { ChartCard, Picker } from '../components';
+import { AppLayout, ChartCard, Note, Picker } from '../components';
 import { joinNotes } from '../lib/display';
 import { useVizTheme } from '../theme/useThemeMode';
 import { MAP_TEXT } from '../config/messages';
-import { EDGE_MODES, ISSUE_PREVIEW_COUNT, type EdgeMode } from './config';
-import { loadRelationshipData } from './data';
-import { groupTypeLabel, personLabel } from './display';
-import { buildLayout } from './layout';
-import { MapLegend } from './components/MapLegend';
-import { RelationshipMap } from './components/RelationshipMap';
+import { EDGE_MODES, ISSUE_PREVIEW_COUNT, type EdgeMode } from '../map/config';
+import { loadRelationshipData } from '../map/data';
+import { groupTypeLabel, personLabel } from '../map/display';
+import { buildLayout } from '../map/layout';
+import { MapLegend } from '../components/organisms/MapLegend';
+import { RelationshipMap } from '../components/organisms/RelationshipMap';
 
-export function MapApp() {
+/** SRUSA の相関図の画面。 */
+export function MapPage() {
   const theme = useVizTheme();
   const source = useMemo(() => loadRelationshipData(), []);
   const data = source?.data ?? null;
@@ -35,7 +36,7 @@ export function MapApp() {
   if (!data || !layout) {
     return (
       <div className="app">
-        <p className="error">{MAP_TEXT.noData}</p>
+        <Note tone="error">{MAP_TEXT.noData}</Note>
       </div>
     );
   }
@@ -60,31 +61,30 @@ export function MapApp() {
   const centerPerson = data.people.find((person) => person.id === centerId);
 
   return (
-    <div className="app">
-      <header className="app-head">
-        <div>
-          <h1 className="app-title">{data.project.name}</h1>
-          <p className="note">
-            {MAP_TEXT.summary(
-              data.people.length,
-              layout.regions.length,
-              data.relations.length,
-              source?.version ?? '',
-            )}
-          </p>
-        </div>
-      </header>
-
-      {source && source.issues.length > 0 && (
-        <p className="error">
-          {MAP_TEXT.issues(
-            source.issues.slice(0, ISSUE_PREVIEW_COUNT),
-            Math.max(0, source.issues.length - ISSUE_PREVIEW_COUNT),
-          )}
-        </p>
+    <AppLayout
+      title={data.project.name}
+      note={MAP_TEXT.summary(
+        data.people.length,
+        layout.regions.length,
+        data.relations.length,
+        source?.version ?? '',
       )}
-
-      <main>
+      messages={
+        source && source.issues.length > 0 ? (
+          <Note tone="error">
+            {MAP_TEXT.issues(
+              source.issues.slice(0, ISSUE_PREVIEW_COUNT),
+              Math.max(0, source.issues.length - ISSUE_PREVIEW_COUNT),
+            )}
+          </Note>
+        ) : undefined
+      }
+      footer={
+        data.view?.notes && data.view.notes.length > 0 ? (
+          <span>{data.view.notes.join(' / ')}</span>
+        ) : undefined
+      }
+    >
         <ChartCard
           title={MAP_TEXT.card.map.title}
           note={joinNotes(
@@ -138,13 +138,6 @@ export function MapApp() {
             onHighlight={setHighlightedGroupId}
           />
         </ChartCard>
-      </main>
-
-      {data.view?.notes && data.view.notes.length > 0 && (
-        <footer className="app-foot">
-          <span>{data.view.notes.join(' / ')}</span>
-        </footer>
-      )}
-    </div>
+    </AppLayout>
   );
 }

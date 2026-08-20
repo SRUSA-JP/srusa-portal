@@ -1,6 +1,7 @@
-import { LEGEND } from '../config';
-import { groupLabel, groupTypeLabel, regionStyle } from '../display';
-import type { RegionPlacement } from '../layout';
+import { Swatch } from '../atoms';
+import { LEGEND } from '../../map/config';
+import { groupLabel, groupTypeLabel, regionStyle } from '../../map/display';
+import type { RegionPlacement } from '../../map/layout';
 import type { VizTheme } from '../../theme/palette';
 
 export interface MapLegendProps {
@@ -39,15 +40,11 @@ export function MapLegend({ regions, theme, highlightedGroupId, onHighlight }: M
                   onClick={() => onHighlight(active ? '' : region.group.id)}
                   style={{ fontSize: LEGEND.fontSize, color: style.labelColor }}
                 >
-                  <span
-                    aria-hidden
+                  <Swatch
                     className="legend-swatch"
-                    style={{
-                      width: LEGEND.swatchSize,
-                      height: LEGEND.swatchSize,
-                      background: style.fill,
-                      borderColor: style.stroke,
-                    }}
+                    size={LEGEND.swatchSize}
+                    background={style.fill}
+                    borderColor={style.stroke}
                   />
                   {groupLabel(region.group)}
                   <span className="legend-count">{region.memberIds.length}</span>

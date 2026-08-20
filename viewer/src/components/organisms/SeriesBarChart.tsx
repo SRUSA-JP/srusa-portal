@@ -17,13 +17,13 @@ import {
   GRID_DASH,
   LEGEND,
   VALUE_LABEL,
-} from '../config/charts';
-import { figureColors } from '../config/colors';
-import type { StackedSeries } from '../lib/selectors';
-import { formatValue, formatWithUnit } from '../lib/display';
-import { formatCompact } from '../lib/format';
-import type { VizTheme } from '../theme/palette';
-import { ChartTooltip } from './ChartTooltip';
+} from '../../config/charts';
+import { figureColors } from '../../config/colors';
+import type { StackedSeries } from '../../lib/selectors';
+import { formatValue, formatWithUnit } from '../../lib/display';
+import { formatCompact } from '../../lib/format';
+import type { VizTheme } from '../../theme/palette';
+import { ChartTooltip } from '../molecules/ChartTooltip';
 
 export interface SeriesBarChartProps {
   data: StackedSeries;

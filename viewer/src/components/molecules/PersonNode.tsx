@@ -1,5 +1,5 @@
-import { avatarFor, nodeStyle, personLabel, personTooltip, type NodeState } from '../display';
-import type { PersonPlacement } from '../layout';
+import { avatarFor, nodeStyle, personLabel, personTooltip, type NodeState } from '../../map/display';
+import type { PersonPlacement } from '../../map/layout';
 import type { VizTheme } from '../../theme/palette';
 
 export interface PersonNodeProps {

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { TABLE_TEXT } from '../config/messages';
-import { downloadCsv, type Row } from '../lib/export';
-import { formatValue } from '../lib/display';
+import { TABLE_TEXT } from '../../config/messages';
+import { Button } from '../atoms';
+import { downloadCsv, type Row } from '../../lib/export';
+import { formatValue } from '../../lib/display';
 
 export interface Column {
   key: string;
@@ -54,9 +55,10 @@ export function DataTable({ rows, columns, csvName = TABLE_TEXT.defaultCsvName, 
   return (
     <div className="table-wrap">
       <div className="table-actions">
-        <button type="button" className="ghost" onClick={() => downloadCsv(csvName, sorted, cols.map((c) => c.key))}>
-          {TABLE_TEXT.exportCsv}
-        </button>
+        <Button
+          label={TABLE_TEXT.exportCsv}
+          onClick={() => downloadCsv(csvName, sorted, cols.map((c) => c.key))}
+        />
       </div>
       <div className="table-scroll">
         <table>

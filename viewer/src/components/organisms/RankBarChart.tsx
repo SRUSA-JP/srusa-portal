@@ -9,13 +9,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { AXIS, BAR, CHART_HEIGHT, CHART_MARGIN, GRID_DASH } from '../config/charts';
-import { figureColors } from '../config/colors';
-import type { Entry } from '../lib/selectors';
-import { formatValue, formatWithUnit } from '../lib/display';
-import { formatCompact } from '../lib/format';
-import type { VizTheme } from '../theme/palette';
-import { ChartTooltip } from './ChartTooltip';
+import { AXIS, BAR, CHART_HEIGHT, CHART_MARGIN, GRID_DASH } from '../../config/charts';
+import { figureColors } from '../../config/colors';
+import type { Entry } from '../../lib/selectors';
+import { formatValue, formatWithUnit } from '../../lib/display';
+import { formatCompact } from '../../lib/format';
+import type { VizTheme } from '../../theme/palette';
+import { ChartTooltip } from '../molecules/ChartTooltip';
 
 export interface RankBarChartProps {
   data: Entry[];
@@ -109,7 +109,11 @@ export function RankBarChart({
         />
         <Bar
           dataKey="value"
-          radius={horizontal ? [0, BAR.radius, BAR.radius, 0] : [BAR.radius, BAR.radius, 0, 0]}
+          radius={
+            horizontal
+              ? [0, BAR.radius, BAR.radius, 0]
+              : [BAR.radius, BAR.radius, 0, 0]
+          }
           isAnimationActive={false}
         >
           {data.map((entry) => (

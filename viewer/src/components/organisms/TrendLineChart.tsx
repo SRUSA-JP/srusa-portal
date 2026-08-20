@@ -9,13 +9,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, LEGEND, LINE, VALUE_LABEL } from '../config/charts';
-import { figureColors } from '../config/colors';
-import type { StackedSeries } from '../lib/selectors';
-import { formatValue, formatWithUnit } from '../lib/display';
-import { formatCompact } from '../lib/format';
-import type { VizTheme } from '../theme/palette';
-import { ChartTooltip } from './ChartTooltip';
+import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, LEGEND, LINE, VALUE_LABEL } from '../../config/charts';
+import { figureColors } from '../../config/colors';
+import type { StackedSeries } from '../../lib/selectors';
+import { formatValue, formatWithUnit } from '../../lib/display';
+import { formatCompact } from '../../lib/format';
+import type { VizTheme } from '../../theme/palette';
+import { ChartTooltip } from '../molecules/ChartTooltip';
 
 export interface TrendLineChartProps {
   data: StackedSeries;

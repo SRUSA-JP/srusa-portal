@@ -110,9 +110,15 @@ cp viewer/dist/index.html viewer/dist/map.html docs/apps/
 | グラフの寸法・軸・ラベル | [viewer/src/config/charts.ts](viewer/src/config/charts.ts) |
 | 指標の一覧・単位・表示件数 | [viewer/src/config/metrics.ts](viewer/src/config/metrics.ts) |
 | 画面の文言 | [viewer/src/config/messages.ts](viewer/src/config/messages.ts) |
+| 部品ごとの色の割り当て | [viewer/src/config/colors.ts](viewer/src/config/colors.ts) |
+| ページごとの見た目（スキン） | [viewer/src/config/skins.ts](viewer/src/config/skins.ts) |
 | データ ID の日本語名 | [viewer/src/config/labels.ts](viewer/src/config/labels.ts) |
 | 相関図の配置・ノード・領域 | [viewer/src/map/config.ts](viewer/src/map/config.ts) |
 | ページ側の埋め込み枠 | [docs/stylesheets/portal.css](docs/stylesheets/portal.css) |
+
+スキンは書体・角丸・線の太さ・テーマ色をまとめて差し替えるプリセットです。埋め込む側で `?skin=<名前>` を付けたページだけがその見た目になります（例: `docs/apps/index.html?skin=minecraft`）。指定が無ければ標準の見た目です。
+
+画面を組み立てる部品は [viewer/src/components/](viewer/src/components/) にアトミックデザインの層で置いています。`atoms`（ボタン・プルダウン・入力欄・色の四角）→ `molecules`（見出し・指標タイル・ツールチップ）→ `organisms`（グラフ・表・絞り込み・相関図）→ `templates`（画面の骨格）の順に組み上げ、画面そのものは [viewer/src/pages/](viewer/src/pages/) にあります。
 
 値の組み立て（単位の付与・注記の生成・高さの計算など）は [viewer/src/lib/display.ts](viewer/src/lib/display.ts)（相関図は [viewer/src/map/display.ts](viewer/src/map/display.ts)）に集約しています。
 

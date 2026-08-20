@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 export interface KpiTileProps {
   label: string;
   value: string;
@@ -15,8 +13,4 @@ export function KpiTile({ label, value, sub }: KpiTileProps) {
       {sub && <span className="kpi-sub">{sub}</span>}
     </div>
   );
-}
-
-export function KpiGrid({ children }: { children: ReactNode }) {
-  return <div className="kpi-grid">{children}</div>;
 }

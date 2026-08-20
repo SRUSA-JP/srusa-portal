@@ -1,8 +1,14 @@
 # 相関図
 
-SRUSA のメンバー同士のつながりと、所属（学校・研究室・部活・友人グループなど）を 1 枚の図にまとめたものです。
+SRUSA のメンバー同士のつながりと、所属（学校・研究室・部活・友人グループなど）を 1 枚にまとめた図です。読み方と操作は図の下にまとめています。
 
-**試験的なコンテンツです。** 掲載の可否と公開範囲はまだ決まっていません。動作を確認するための暫定ページです。
+**試験的なコンテンツです。** 掲載の可否と公開範囲はまだ決まっていません。
+
+<div class="app-embed">
+  <iframe src="../apps/map.html" title="SRUSA 相関図" loading="lazy"></iframe>
+</div>
+
+[相関図を単独で開く](../apps/map.html)
 
 ## 図の読み方
 
@@ -23,14 +29,6 @@ SRUSA のメンバー同士のつながりと、所属（学校・研究室・�
 
 下部の「グループ」一覧からも領域を強調できます。
 
-## 相関図
-
-<div class="app-embed">
-  <iframe src="../apps/map.html" title="SRUSA 相関図" loading="lazy"></iframe>
-</div>
-
-[相関図を単独で開く](../apps/map.html)
-
 ## データについての注意
 
 - 学校名、会社名、研究室名は頭文字だけの表記です
@@ -41,6 +39,6 @@ SRUSA のメンバー同士のつながりと、所属（学校・研究室・�
 
 | 項目 | 内容 |
 | --- | --- |
-| 実装 | React 19 + SVG（TypeScript / Vite）。ソースは `viewer/src/map/` |
+| 実装 | React 19 + SVG（TypeScript / Vite）。配置と描画の計算は `viewer/src/map/`、画面は `viewer/src/pages/MapPage.tsx` |
 | データ | `data/srusa-relationship-v0.2.json` をビルド時に取り込み |
 | 配置 | `docs/apps/map.html`（統計ビューアと共通のビルド成果物） |

@@ -9,13 +9,13 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts';
-import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, SCATTER, VALUE_LABEL } from '../config/charts';
-import { figureColors } from '../config/colors';
-import type { ScatterPoint } from '../lib/selectors';
-import { axisTitle } from '../lib/display';
-import { formatCompact, formatDecimal } from '../lib/format';
-import type { VizTheme } from '../theme/palette';
-import { ChartTooltip } from './ChartTooltip';
+import { AXIS, CHART_HEIGHT, CHART_MARGIN, GRID_DASH, SCATTER, VALUE_LABEL } from '../../config/charts';
+import { figureColors } from '../../config/colors';
+import type { ScatterPoint } from '../../lib/selectors';
+import { axisTitle } from '../../lib/display';
+import { formatCompact, formatDecimal } from '../../lib/format';
+import type { VizTheme } from '../../theme/palette';
+import { ChartTooltip } from '../molecules/ChartTooltip';
 
 export interface MetricScatterProps {
   points: ScatterPoint[];
