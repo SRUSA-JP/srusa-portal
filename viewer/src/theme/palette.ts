@@ -69,6 +69,14 @@ export function themeFor(mode: ThemeMode): VizTheme {
 }
 
 /**
+ * カテゴリ色の枠数。
+ *
+ * 同時に見せる系列・分類の上限はこの数で決まる（超えた分は「その他」へ畳む）。
+ * 上限を数値で書かず、必ずここを参照する。
+ */
+export const CATEGORICAL_SLOTS = LIGHT_THEME.categorical.length;
+
+/**
  * 系列キー → 色。並び順ではなくキーの登録順で固定するので、
  * フィルタで系列が減っても残った系列の色は変わらない。
  */
