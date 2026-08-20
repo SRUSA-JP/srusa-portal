@@ -1,3 +1,4 @@
+import { DATA_TEXT } from '../config/messages';
 import { parseStatsDocument } from './parse';
 import type { StatsDocument } from './schema';
 
@@ -45,7 +46,7 @@ export function listDatasets(): DatasetRef[] {
 /** ID を指定してデータセットを読み込む。 */
 export async function loadDataset(id: string): Promise<StatsDocument> {
   const entry = Object.entries(modules).find(([path]) => idFromPath(path) === id);
-  if (!entry) throw new Error(`データセットが見つかりません: ${id}`);
+  if (!entry) throw new Error(DATA_TEXT.datasetNotFound(id));
   const mod = await entry[1]();
   return parseStatsDocument(mod.default);
 }

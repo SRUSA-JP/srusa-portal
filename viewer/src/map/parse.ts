@@ -4,6 +4,7 @@
  * 壊れたデータでも画面が落ちないように、致命的な問題は例外、
  * 部分的な不整合（参照切れなど）は `issues` として返して画面に出す。
  */
+import { DATA_TEXT } from '../config/messages';
 import type { Group, Person, Relation, RelationshipData } from './schema';
 
 export class MapDataError extends Error {
@@ -18,12 +19,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function requireArray(value: unknown, field: string): unknown[] {
-  if (!Array.isArray(value)) throw new MapDataError('配列ではありません', field);
+  if (!Array.isArray(value)) throw new MapDataError(DATA_TEXT.notArray, field);
   return value;
 }
 
 function requireString(value: unknown, field: string): string {
-  if (typeof value !== 'string') throw new MapDataError('文字列ではありません', field);
+  if (typeof value !== 'string') throw new MapDataError(DATA_TEXT.notString, field);
   return value;
 }
 
@@ -34,7 +35,7 @@ function stringArray(value: unknown, field: string): string[] {
 
 function parsePerson(raw: unknown, index: number): Person {
   const field = `people[${index}]`;
-  if (!isRecord(raw)) throw new MapDataError('オブジェクトではありません', field);
+  if (!isRecord(raw)) throw new MapDataError(DATA_TEXT.notObject, field);
   return {
     id: requireString(raw.id, `${field}.id`),
     onlineName: requireString(raw.onlineName, `${field}.onlineName`),
@@ -47,7 +48,7 @@ function parsePerson(raw: unknown, index: number): Person {
 
 function parseGroup(raw: unknown, index: number): Group {
   const field = `groups[${index}]`;
-  if (!isRecord(raw)) throw new MapDataError('オブジェクトではありません', field);
+  if (!isRecord(raw)) throw new MapDataError(DATA_TEXT.notObject, field);
   return {
     id: requireString(raw.id, `${field}.id`),
     name: requireString(raw.name, `${field}.name`),
@@ -58,7 +59,7 @@ function parseGroup(raw: unknown, index: number): Group {
 
 function parseRelation(raw: unknown, index: number): Relation {
   const field = `relations[${index}]`;
-  if (!isRecord(raw)) throw new MapDataError('オブジェクトではありません', field);
+  if (!isRecord(raw)) throw new MapDataError(DATA_TEXT.notObject, field);
   return {
     source: requireString(raw.source, `${field}.source`),
     target: requireString(raw.target, `${field}.target`),
@@ -75,7 +76,7 @@ export interface ParseResult {
 }
 
 export function parseRelationshipData(raw: unknown): ParseResult {
-  if (!isRecord(raw)) throw new MapDataError('オブジェクトではありません', '<root>');
+  if (!isRecord(raw)) throw new MapDataError(DATA_TEXT.notObject, '<root>');
   const project = isRecord(raw.project) ? raw.project : {};
   const view = isRecord(raw.view) ? raw.view : undefined;
 
@@ -88,24 +89,24 @@ export function parseRelationshipData(raw: unknown): ParseResult {
   const groupNames = new Set(groups.map((g) => g.name));
   const groupIds = new Set(groups.map((g) => g.id));
 
-  if (personIds.size !== people.length) issues.push('人物 ID が重複しています。');
-  if (groupIds.size !== groups.length) issues.push('グループ ID が重複しています。');
+  if (personIds.size !== people.length) issues.push(DATA_TEXT.issue.duplicatePerson);
+  if (groupIds.size !== groups.length) issues.push(DATA_TEXT.issue.duplicateGroup);
 
   for (const person of people) {
     for (const attribute of person.attributes) {
       if (!groupNames.has(attribute)) {
-        issues.push(`${person.id} の所属「${attribute}」に対応するグループがありません。`);
+        issues.push(DATA_TEXT.issue.missingGroup(person.id, attribute));
       }
     }
   }
   for (const group of groups) {
     if (group.parentGroupId && !groupIds.has(group.parentGroupId)) {
-      issues.push(`${group.id} の上位グループ「${group.parentGroupId}」がありません。`);
+      issues.push(DATA_TEXT.issue.missingParentGroup(group.id, group.parentGroupId));
     }
   }
   const known = relations.filter((relation) => {
     const ok = personIds.has(relation.source) && personIds.has(relation.target);
-    if (!ok) issues.push(`関係 ${relation.source} → ${relation.target} に未登録の人物が含まれます。`);
+    if (!ok) issues.push(DATA_TEXT.issue.unknownPerson(relation.source, relation.target));
     return ok;
   });
 

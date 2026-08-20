@@ -191,6 +191,35 @@ export const MAP_TEXT = {
   },
 } as const;
 
+/**
+ * データを読むときの知らせ。
+ *
+ * ここで作られた文はそのまま画面のエラー表示に出るので、
+ * 開発者向けの言い回しにしない。
+ */
+export const DATA_TEXT = {
+  /** 値の形が期待と違うとき。どの項目かは呼び出し側が添える。 */
+  notObject: 'オブジェクトではありません',
+  notArray: '配列ではありません',
+  notString: '文字列ではありません',
+  notNumber: '数値ではありません',
+  notStringField: (field: string) => `${field} が文字列ではありません`,
+  brokenJson: (reason: string) => `JSON として解釈できません: ${reason}`,
+  datasetNotFound: (id: string) => `データセットが見つかりません: ${id}`,
+
+  /** 相関図のデータの不整合。読み込みは続け、ページ上部に並べて知らせる。 */
+  issue: {
+    duplicatePerson: '人物 ID が重複しています。',
+    duplicateGroup: 'グループ ID が重複しています。',
+    missingGroup: (personId: string, attribute: string) =>
+      `${personId} の所属「${attribute}」に対応するグループがありません。`,
+    missingParentGroup: (groupId: string, parentId: string) =>
+      `${groupId} の上位グループ「${parentId}」がありません。`,
+    unknownPerson: (source: string, target: string) =>
+      `関係 ${source} → ${target} に未登録の人物が含まれます。`,
+  },
+} as const;
+
 /** 表（DataTable）。統計ビューアと相関図で共用する。 */
 export const TABLE_TEXT = {
   exportCsv: 'CSV を書き出す',

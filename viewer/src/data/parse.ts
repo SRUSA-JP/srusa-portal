@@ -1,3 +1,4 @@
+import { DATA_TEXT } from '../config/messages';
 import type { NamedPlayer, StatsDocument, PlayerStats } from './schema';
 
 /** 検証に失敗したときに投げるエラー。どのフィールドで落ちたかを保持する。 */
@@ -16,13 +17,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function requireRecord(value: unknown, field: string): Record<string, unknown> {
-  if (!isRecord(value)) throw new StatsParseError('オブジェクトではありません', field);
+  if (!isRecord(value)) throw new StatsParseError(DATA_TEXT.notObject, field);
   return value;
 }
 
 function requireNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || Number.isNaN(value)) {
-    throw new StatsParseError('数値ではありません', field);
+    throw new StatsParseError(DATA_TEXT.notNumber, field);
   }
   return value;
 }
@@ -52,7 +53,7 @@ export function parseStatsDocument(raw: unknown): StatsDocument {
   for (const [name, value] of Object.entries(players)) {
     const player = requireRecord(value, `players.${name}`);
     if (typeof player.uuid !== 'string') {
-      throw new StatsParseError('uuid が文字列ではありません', `players.${name}.uuid`);
+      throw new StatsParseError(DATA_TEXT.notStringField('uuid'), `players.${name}.uuid`);
     }
     for (const section of requiredSections) {
       requireRecord(player[section], `players.${name}.${section}`);
@@ -69,7 +70,7 @@ export function parseStatsJson(text: string): StatsDocument {
   try {
     raw = JSON.parse(text);
   } catch (error) {
-    throw new StatsParseError(`JSON として解釈できません: ${(error as Error).message}`, '<root>');
+    throw new StatsParseError(DATA_TEXT.brokenJson((error as Error).message), '<root>');
   }
   return parseStatsDocument(raw);
 }
