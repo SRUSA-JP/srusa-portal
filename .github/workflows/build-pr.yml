@@ -137,6 +137,8 @@ jobs:
       contents: write
       issues: write
       pages: write
+      pull-requests: write
+      statuses: write
       id-token: write
     environment:
       name: github-pages
@@ -200,17 +202,14 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
 
-      - name: Add preview link to pull request
+      - name: Prepare preview link
         id: preview-link
         uses: actions/github-script@v9
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
-          HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
-            const marker = '<!-- srusa-portal-pr-preview -->';
             const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
             const pageUrlValue = process.env.PAGE_URL;
 
@@ -229,11 +228,42 @@ jobs:
 
             core.setOutput('preview-url', previewUrl);
 
+      - name: Add preview link to pull request checks
+        uses: actions/github-script@v9
+        env:
+          PREVIEW_URL: ${{ steps.preview-link.outputs.preview-url }}
+          HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha: process.env.HEAD_SHA,
+              state: 'success',
+              context: 'preview/github-pages',
+              description: 'GitHub Pages preview is ready',
+              target_url: process.env.PREVIEW_URL,
+            });
+
+      - name: Add preview link to pull request comment
+        continue-on-error: true
+        uses: actions/github-script@v9
+        env:
+          PREVIEW_URL: ${{ steps.preview-link.outputs.preview-url }}
+          PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
+          HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const marker = '<!-- srusa-portal-pr-preview -->';
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+
             const body = [
               marker,
               '## Pull Request Preview',
               '',
-              `[ブラウザで Preview を開く](${previewUrl})`,
+              `[ブラウザで Preview を開く](${process.env.PREVIEW_URL})`,
               '',
               `対象コミット: \`${process.env.HEAD_SHA.slice(0, 7)}\``,
               `[Workflow の実行結果](${process.env.RUN_URL})`,
@@ -287,8 +317,29 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: write
+      statuses: write
     steps:
+      - name: Add failure link to pull request checks
+        uses: actions/github-script@v9
+        env:
+          HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha: process.env.HEAD_SHA,
+              state: 'failure',
+              context: 'preview/github-pages',
+              description: 'GitHub Pages preview failed',
+              target_url: process.env.RUN_URL,
+            });
+
       - name: Add failure link to pull request
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}

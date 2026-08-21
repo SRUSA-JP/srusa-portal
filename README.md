@@ -102,7 +102,7 @@ GitHub Actions の画面から実行する場合は、次の手順を使用し�
 2. `Run workflow` を選び、実行対象のブランチは `main` のままにする
 3. `pull_request_number` に確認したい Pull Request の番号を入力して実行する
 
-どちらの方法でも、完了後に対象 Pull Request へ追加される `Pull Request Preview` のリンクから結果を開けます。同じ Pull Request で再実行すると、既存の Preview URL と案内コメントが更新されます。Workflow の Summary にも Preview URL を表示します。fork から作成された Pull Request は対象外です。
+どちらの方法でも、完了後に対象 Pull Request の `Checks` に表示される `preview/github-pages` の `Details` から結果を開けます。案内コメントと Workflow の Summary にも Preview URL を表示します。同じ Pull Request で再実行しても Preview URL は変わりません。fork から作成された Pull Request は対象外です。
 
 このワークフローは、書き込み権限を持たないジョブで Pull Request の内容をビルドした後、別のジョブで `pages-content` ブランチの `previews/pr-<PR番号>/` を更新し、ブランチ全体を GitHub Pages へデプロイします。外部サービスの token や Repository secrets は使用しません。
 
