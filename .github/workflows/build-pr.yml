@@ -1,28 +1,81 @@
-name: Build MkDocs for pull requests
+name: Publish pull request preview
 
 on:
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Preview を公開する Pull Request の番号
+        required: true
+        type: number
 
 permissions:
   contents: read
 
 concurrency:
-  group: pr-build-${{ github.event.pull_request.number }}
+  group: pr-preview-${{ inputs.pull_request_number }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build and upload artifact
+  resolve-pull-request:
+    name: Resolve pull request
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      head-sha: ${{ steps.pull-request.outputs.head-sha }}
+      pull-request-number: ${{ steps.pull-request.outputs.pull-request-number }}
     steps:
-      - name: Check out repository
+      - name: Validate pull request
+        id: pull-request
+        uses: actions/github-script@v9
+        env:
+          PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
+        with:
+          script: |
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+            const { owner, repo } = context.repo;
+
+            if (context.ref !== 'refs/heads/main') {
+              core.setFailed('Run workflow の実行対象には main ブランチを選択してください。');
+              return;
+            }
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pullRequestNumber,
+            });
+
+            if (pullRequest.state !== 'open') {
+              core.setFailed(`Pull Request #${pullRequestNumber} は open ではありません。`);
+              return;
+            }
+
+            if (pullRequest.head.repo?.full_name !== `${owner}/${repo}`) {
+              core.setFailed('fork から作成された Pull Request の Preview 公開には対応していません。');
+              return;
+            }
+
+            core.setOutput('head-sha', pullRequest.head.sha);
+            core.setOutput('pull-request-number', String(pullRequestNumber));
+
+  build:
+    name: Build preview
+    needs: resolve-pull-request
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out pull request
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve-pull-request.outputs.head-sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
-          cache: pip
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -30,18 +83,106 @@ jobs:
       - name: Build site
         run: mkdocs build --strict
 
-      - name: Upload preview artifact
-        id: upload-artifact
+      - name: Pass site to deploy job
         uses: actions/upload-artifact@v7
         with:
-          name: mkdocs-site-pr-${{ github.event.pull_request.number }}
+          name: pr-preview-${{ needs.resolve-pull-request.outputs.pull-request-number }}-${{ github.run_id }}
           path: site
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 1
 
-      - name: Add artifact link to summary
+  deploy:
+    name: Publish preview
+    needs:
+      - resolve-pull-request
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Validate Cloudflare credentials
         env:
-          ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          echo "## PR preview artifact" >> "$GITHUB_STEP_SUMMARY"
-          echo "[Download the built MkDocs site]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo 'CLOUDFLARE_ACCOUNT_ID と CLOUDFLARE_API_TOKEN を Repository secrets に登録してください。' >&2
+            exit 1
+          fi
+
+      - name: Receive built site
+        uses: actions/download-artifact@v8
+        with:
+          name: pr-preview-${{ needs.resolve-pull-request.outputs.pull-request-number }}-${{ github.run_id }}
+          path: site
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site --project-name=srusa-portal --branch=pr-${{ needs.resolve-pull-request.outputs.pull-request-number }}
+
+      - name: Add preview link to pull request
+        uses: actions/github-script@v9
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
+          HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const marker = '<!-- srusa-portal-pr-preview -->';
+            const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
+            const previewUrl = process.env.PREVIEW_URL;
+
+            if (!previewUrl?.startsWith('https://')) {
+              core.setFailed('Cloudflare Pages の Preview URL を取得できませんでした。');
+              return;
+            }
+
+            const body = [
+              marker,
+              '## Pull Request Preview',
+              '',
+              `[ブラウザで Preview を開く](${previewUrl})`,
+              '',
+              `対象コミット: \`${process.env.HEAD_SHA.slice(0, 7)}\``,
+              `[Workflow の実行結果](${process.env.RUN_URL})`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: pullRequestNumber,
+              per_page: 100,
+            });
+            const existingComment = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pullRequestNumber,
+                body,
+              });
+            }
+
+      - name: Add preview link to workflow summary
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+        run: |
+          echo '## Pull Request Preview' >> "$GITHUB_STEP_SUMMARY"
+          echo "[Open preview]($PREVIEW_URL)" >> "$GITHUB_STEP_SUMMARY"

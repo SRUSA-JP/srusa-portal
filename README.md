@@ -35,7 +35,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [.python-version](.python-version): ローカル、GitHub Actions、Cloudflare Pages で使用する Python のバージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
-- [.github/workflows/build-pr.yml](.github/workflows/build-pr.yml): Pull Request のビルドと成果物の保存設定
+- [.github/workflows/build-pr.yml](.github/workflows/build-pr.yml): Pull Request の手動ビルドと Preview 公開設定
 - [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml): GitHub Pages へのビルド・デプロイ設定
 
 ## 開発環境
@@ -86,19 +86,27 @@ mkdocs build --strict
 
 ## Pull Request のビルド確認
 
-Pull Request の作成時と更新時には、GitHub Actions で `mkdocs build --strict` を実行します。ビルドに成功すると、生成した `site/` が `mkdocs-site-pr-<PR番号>` という名前の artifact として7日間保存されます。
+Pull Request の内容は、GitHub Actions から手動でビルドし、Cloudflare Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
 
-artifact は、対象ワークフロー実行の Summary に表示されるリンク、または画面下部の `Artifacts` からダウンロードできます。展開したディレクトリで次のコマンドを実行すると、ブラウザで成果物を確認できます。
+1. GitHub の `Actions` タブで `Publish pull request preview` を開く
+2. `Run workflow` を選び、実行対象のブランチは `main` のままにする
+3. `pull_request_number` に確認したい Pull Request の番号を入力して実行する
+4. 完了後、対象 Pull Request に追加される `Pull Request Preview` のリンクを開く
 
-```shell
-python -m http.server 8000
-```
+同じ Pull Request で再実行すると、既存の Preview URL と案内コメントが更新されます。Workflow の Summary にも Preview URL を表示します。fork から作成された Pull Request は対象外です。
 
-この PR 用ワークフローはビルドと artifact の保存だけを行い、GitHub Pages へのデプロイは行いません。`main` ブランチへの push で動く既存の GitHub Pages デプロイとは、トリガー、権限、concurrency を分離しています。
+このワークフローは、認証情報を持たないジョブで Pull Request の内容をビルドした後、別のジョブで成果物を Cloudflare Pages へ公開します。実行には、GitHub Actions の Repository secrets に次の値が必要です。
+
+| Secret | 内容 |
+| --- | --- |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare の Account ID |
+| `CLOUDFLARE_API_TOKEN` | 対象アカウントの Cloudflare Pages に対する Edit 権限だけを持つ API token |
+
+Preview URL は初期状態では公開されます。認証情報、個人情報、非公開情報を含む変更には使用しないでください。Preview が不要になった場合は、Cloudflare Pages の `Deployments` から対象の Preview deployment を確認します。
 
 ## Cloudflare Pages へのデプロイ
 
-Cloudflare Pages と GitHub を連携し、`main` ブランチへの push を自動でビルド・公開します。Cloudflare の API トークンは使用しないため、リポジトリや GitHub Actions に Cloudflare の認証情報を保存する必要はありません。
+Cloudflare Pages と GitHub を連携し、`main` ブランチへの push を自動でビルド・公開します。本番デプロイには API token を使用しません。Pull Request の手動 Preview 公開だけが、GitHub Actions の Repository secrets に保存した権限限定の API token を使用します。
 
 ### 初回設定
 
