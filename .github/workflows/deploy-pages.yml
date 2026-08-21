@@ -62,7 +62,6 @@ jobs:
             git switch --create pages-content --track origin/pages-content
           else
             git switch --orphan pages-content
-            git rm -rf .
           fi
 
       - name: Receive production site
