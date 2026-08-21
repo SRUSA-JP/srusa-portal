@@ -1,0 +1,47 @@
+name: Build MkDocs for pull requests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and upload artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Build site
+        run: mkdocs build --strict
+
+      - name: Upload preview artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mkdocs-site-pr-${{ github.event.pull_request.number }}
+          path: site
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Add artifact link to summary
+        env:
+          ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+        run: |
+          echo "## PR preview artifact" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Download the built MkDocs site]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"

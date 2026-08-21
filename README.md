@@ -35,6 +35,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [.python-version](.python-version): ローカル、GitHub Actions、Cloudflare Pages で使用する Python のバージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
+- [.github/workflows/build-pr.yml](.github/workflows/build-pr.yml): Pull Request のビルドと成果物の保存設定
 - [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml): GitHub Pages へのビルド・デプロイ設定
 
 ## 開発環境
@@ -82,6 +83,18 @@ mkdocs serve
 ```shell
 mkdocs build --strict
 ```
+
+## Pull Request のビルド確認
+
+Pull Request の作成時と更新時には、GitHub Actions で `mkdocs build --strict` を実行します。ビルドに成功すると、生成した `site/` が `mkdocs-site-pr-<PR番号>` という名前の artifact として7日間保存されます。
+
+artifact は、対象ワークフロー実行の Summary に表示されるリンク、または画面下部の `Artifacts` からダウンロードできます。展開したディレクトリで次のコマンドを実行すると、ブラウザで成果物を確認できます。
+
+```shell
+python -m http.server 8000
+```
+
+この PR 用ワークフローはビルドと artifact の保存だけを行い、GitHub Pages へのデプロイは行いません。`main` ブランチへの push で動く既存の GitHub Pages デプロイとは、トリガー、権限、concurrency を分離しています。
 
 ## Cloudflare Pages へのデプロイ
 
