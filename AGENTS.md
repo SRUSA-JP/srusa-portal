@@ -18,7 +18,7 @@
 - Python 依存関係は `requirements.txt` でバージョンを固定します。
 - 標準の開発環境には `.devcontainer/` の Dev Container を使用します。Zed と VS Code のどちらからでも利用できる構成を維持します。
 - Cloudflare Pages の GitHub 連携を使用し、`main` ブランチを本番へ自動デプロイします。
-- Pull Request の Preview は GitHub Actions の画面から手動実行し、Cloudflare Pages の Preview URL を対象 Pull Request から開けるようにします。
+- Pull Request の Preview は、PR の `preview` コメントまたは GitHub Actions の画面から手動実行し、Cloudflare Pages の Preview URL を対象 Pull Request から開けるようにします。
 - Cloudflare Pages での公開確認が完了するまでは、`.github/workflows/deploy-pages.yml` による既存の GitHub Pages デプロイも維持します。
 - ローカル、GitHub Actions、Cloudflare Pages の Python バージョンは `.python-version` と Dev Container で 3.11 にそろえます。
 

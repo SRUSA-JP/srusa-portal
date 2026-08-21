@@ -86,14 +86,23 @@ mkdocs build --strict
 
 ## Pull Request のビルド確認
 
-Pull Request の内容は、GitHub Actions から手動でビルドし、Cloudflare Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
+Pull Request の内容は、PR にコマンドをコメントするか GitHub Actions から手動でビルドし、Cloudflare Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
+
+通常は、対象 Pull Request の `Conversation` で次の1行をコメントします。
+
+```text
+preview
+```
+
+`/preview` でも実行できます。コメントからの公開を開始できるのは、このリポジトリへの書き込み権限を持つユーザーだけです。
+
+GitHub Actions の画面から実行する場合は、次の手順を使用します。
 
 1. GitHub の `Actions` タブで `Publish pull request preview` を開く
 2. `Run workflow` を選び、実行対象のブランチは `main` のままにする
 3. `pull_request_number` に確認したい Pull Request の番号を入力して実行する
-4. 完了後、対象 Pull Request に追加される `Pull Request Preview` のリンクを開く
 
-同じ Pull Request で再実行すると、既存の Preview URL と案内コメントが更新されます。Workflow の Summary にも Preview URL を表示します。fork から作成された Pull Request は対象外です。
+どちらの方法でも、完了後に対象 Pull Request へ追加される `Pull Request Preview` のリンクから結果を開けます。同じ Pull Request で再実行すると、既存の Preview URL と案内コメントが更新されます。Workflow の Summary にも Preview URL を表示します。fork から作成された Pull Request は対象外です。
 
 このワークフローは、認証情報を持たないジョブで Pull Request の内容をビルドした後、別のジョブで成果物を Cloudflare Pages へ公開します。実行には、GitHub Actions の Repository secrets に次の値が必要です。
 
