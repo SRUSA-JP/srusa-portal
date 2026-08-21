@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -23,33 +22,83 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version-file: .python-version
           cache: pip
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
-
       - name: Build site
         run: mkdocs build --strict
 
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v5
+      - name: Pass production site to deploy job
+        uses: actions/upload-artifact@v7
         with:
+          name: production-site-${{ github.run_id }}
           path: site
+          if-no-files-found: error
+          retention-days: 1
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          path: pages-content
+
+      - name: Prepare Pages content branch
+        working-directory: pages-content
+        run: |
+          if git fetch origin pages-content:refs/remotes/origin/pages-content; then
+            git switch --create pages-content --track origin/pages-content
+          else
+            git switch --orphan pages-content
+            git rm -rf .
+          fi
+
+      - name: Receive production site
+        uses: actions/download-artifact@v8
+        with:
+          name: production-site-${{ github.run_id }}
+          path: production-site
+
+      - name: Update production content
+        run: |
+          mkdir -p pages-content/previews
+          rsync -a --delete --exclude '.git/' --exclude 'previews/' production-site/ pages-content/
+          touch pages-content/.nojekyll
+
+      - name: Save Pages content
+        working-directory: pages-content
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          if ! git diff --cached --quiet; then
+            git commit -m '[update]GitHub Pagesの本番サイトを更新'
+            git push origin HEAD:pages-content
+          fi
+
+      - name: Prepare GitHub Pages artifact
+        run: rsync -a --exclude '.git/' pages-content/ publish-output/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: publish-output
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

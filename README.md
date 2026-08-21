@@ -14,8 +14,8 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - テーマには Material for MkDocs を使用する
 - コンテンツは `docs/` 配下、登山部のページは `docs/mountaineering/` 配下に置く
 - Python 依存関係は `requirements.txt` でバージョンを固定する
-- Cloudflare Pages の GitHub 連携を使い、`main` ブランチの内容を自動でビルド・公開する
-- Cloudflare Pages での公開確認が完了するまでは、既存の GitHub Pages も維持する
+- 現在の本番サイトと Pull Request Preview は GitHub Pages へデプロイする
+- Cloudflare Pages への移行はまだ実施せず、現在の CI/CD からは使用しない
 
 ## 未決事項
 
@@ -32,7 +32,7 @@ SRUSA の情報をまとめる、MkDocs ベースのポータルサイト用リ�
 - [.gitignore](.gitignore): ローカル環境、生成物、秘密情報の除外設定
 - [mkdocs.yml](mkdocs.yml): サイト名、テーマ、ナビゲーションなどの MkDocs 設定
 - [requirements.txt](requirements.txt): Python 依存関係と固定バージョン
-- [.python-version](.python-version): ローカル、GitHub Actions、Cloudflare Pages で使用する Python のバージョン
+- [.python-version](.python-version): ローカルと GitHub Actions で使用する Python のバージョン
 - [docs/](docs/): サイトの Markdown コンテンツ
 - [.devcontainer/](.devcontainer/): Zed や VS Code から利用できる Dev Container 開発環境
 - [.github/workflows/build-pr.yml](.github/workflows/build-pr.yml): Pull Request の手動ビルドと Preview 公開設定
@@ -86,7 +86,7 @@ mkdocs build --strict
 
 ## Pull Request のビルド確認
 
-Pull Request の内容は、PR にコマンドをコメントするか GitHub Actions から手動でビルドし、Cloudflare Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
+Pull Request の内容は、PR にコマンドをコメントするか GitHub Actions から手動でビルドし、GitHub Pages の Preview URL で確認できます。成果物をダウンロードしてローカルサーバーを起動する必要はありません。
 
 通常は、対象 Pull Request の `Conversation` で次の1行をコメントします。
 
@@ -104,18 +104,15 @@ GitHub Actions の画面から実行する場合は、次の手順を使用し�
 
 どちらの方法でも、完了後に対象 Pull Request へ追加される `Pull Request Preview` のリンクから結果を開けます。同じ Pull Request で再実行すると、既存の Preview URL と案内コメントが更新されます。Workflow の Summary にも Preview URL を表示します。fork から作成された Pull Request は対象外です。
 
-このワークフローは、認証情報を持たないジョブで Pull Request の内容をビルドした後、別のジョブで成果物を Cloudflare Pages へ公開します。実行には、GitHub Actions の Repository secrets に次の値が必要です。
+このワークフローは、書き込み権限を持たないジョブで Pull Request の内容をビルドした後、別のジョブで `pages-content` ブランチの `previews/pr-<PR番号>/` を更新し、ブランチ全体を GitHub Pages へデプロイします。外部サービスの token や Repository secrets は使用しません。
 
-| Secret | 内容 |
-| --- | --- |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare の Account ID |
-| `CLOUDFLARE_API_TOKEN` | 対象アカウントの Cloudflare Pages に対する Edit 権限だけを持つ API token |
+`pages-content` は本番サイトと複数の Preview を共存させるためのデプロイ状態専用ブランチです。生成物を保持しますが、`main` へマージしません。本番と Preview のデプロイは同時に実行せず、同じキューで順番に処理します。
 
-Preview URL は初期状態では公開されます。認証情報、個人情報、非公開情報を含む変更には使用しないでください。Preview が不要になった場合は、Cloudflare Pages の `Deployments` から対象の Preview deployment を確認します。
+Preview URL は公開されます。認証情報、個人情報、非公開情報を含む変更には使用しないでください。Pull Request を閉じると、対応する Preview を `pages-content` から削除してGitHub Pagesを再公開します。
 
-## Cloudflare Pages へのデプロイ
+## Cloudflare Pages への移行（未実施）
 
-Cloudflare Pages と GitHub を連携し、`main` ブランチへの push を自動でビルド・公開します。本番デプロイには API token を使用しません。Pull Request の手動 Preview 公開だけが、GitHub Actions の Repository secrets に保存した権限限定の API token を使用します。
+Cloudflare Pages への移行はまだ実施していません。現在の本番デプロイと Pull Request Preview はどちらも GitHub Pages を使用し、Cloudflare の API token や設定には依存しません。以下は将来移行するときの検討用手順です。
 
 ### 初回設定
 
@@ -152,7 +149,7 @@ Cloudflare Pages のプレビューURLは初期状態では公開されます。
 
 Cloudflare Pages のデプロイに問題がある場合は、`Deployments` から直前の正常な本番デプロイへロールバックします。Cloudflare側の確認が完了するまでは、既存のGitHub Pagesを停止しません。
 
-## 既存の GitHub Pages へのデプロイ
+## GitHub Pages へのデプロイ
 
 初回のみ、GitHub のリポジトリ画面で `Settings` → `Pages` → `Build and deployment` → `Source` を開き、`GitHub Actions` を選択します。
 
@@ -160,11 +157,12 @@ Cloudflare Pages のデプロイに問題がある場合は、`Deployments` か�
 
 1. Python 3.11 と `requirements.txt` を使って環境を構築する
 2. `mkdocs build --strict` でサイトを生成する
-3. 生成した `site/` を GitHub Pages へデプロイする
+3. `pages-content` ブランチの本番部分を更新し、`previews/` は保持する
+4. 本番サイトと Preview をまとめて GitHub Pages へデプロイする
 
 GitHub の `Actions` タブから手動実行することもできます。公開URLはデプロイジョブの `github-pages` environment に表示されます。
 
-公開後に問題が見つかった場合は、正常だった状態へ戻すコミットを `main` に反映し、ワークフローを再実行します。Cloudflare Pages の公開確認後に GitHub Pages を停止する場合は、このワークフローの削除を別の変更として実施します。
+公開後に問題が見つかった場合は、正常だった状態へ戻すコミットを `main` に反映し、ワークフローを再実行します。Pull Request Preview に問題がある場合は、対象の変更を修正して `preview` を再実行します。
 
 ## 実装順の提案
 
@@ -181,3 +179,5 @@ GitHub の `Actions` タブから手動実行することもできます。公�
 - `.env` などのローカル専用設定（共有用のサンプルを除く）
 - Python の仮想環境、キャッシュ、ログ
 - MkDocs が生成する `site/`
+
+`pages-content` ブランチだけはGitHub Pagesの公開状態を保持するため、CIが生成物をコミットします。このブランチを通常の開発や `main` へのマージには使用しません。

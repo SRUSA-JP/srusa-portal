@@ -17,10 +17,11 @@
 - コンテンツは `docs/` 配下に置き、登山部は `docs/mountaineering/` 配下で管理します。
 - Python 依存関係は `requirements.txt` でバージョンを固定します。
 - 標準の開発環境には `.devcontainer/` の Dev Container を使用します。Zed と VS Code のどちらからでも利用できる構成を維持します。
-- Cloudflare Pages の GitHub 連携を使用し、`main` ブランチを本番へ自動デプロイします。
-- Pull Request の Preview は、PR の `preview` コメントまたは GitHub Actions の画面から手動実行し、Cloudflare Pages の Preview URL を対象 Pull Request から開けるようにします。
-- Cloudflare Pages での公開確認が完了するまでは、`.github/workflows/deploy-pages.yml` による既存の GitHub Pages デプロイも維持します。
-- ローカル、GitHub Actions、Cloudflare Pages の Python バージョンは `.python-version` と Dev Container で 3.11 にそろえます。
+- 現在の本番サイトは `.github/workflows/deploy-pages.yml` から GitHub Pages へ自動デプロイします。
+- Pull Request の Preview は、PR の `preview` コメントまたは GitHub Actions の画面から手動実行し、GitHub Pages の Preview URL を対象 Pull Request から開けるようにします。
+- GitHub Pages の本番サイトと複数の Preview は、デプロイ状態専用の `pages-content` ブランチで共存させます。このブランチは `main` へマージしません。
+- Cloudflare Pages への移行は未実施です。移行を別途決定するまでは、現在の CI/CD から Cloudflare を使用しません。
+- ローカルと GitHub Actions の Python バージョンは `.python-version` と Dev Container で 3.11 にそろえます。
 
 ### 未決事項
 
@@ -57,7 +58,7 @@
 - Dev Container の依存関係は `requirements.txt` を参照し、別の定義を重複して持たせないでください。
 - GitHub Actions のバージョンを変更する場合は、公式リリースと互換性を確認してください。
 - 実行可能な手順を追加したら、README にセットアップ、プレビュー、ビルド、検証の各コマンドを反映してください。
-- 生成物は原則としてコミットせず、MkDocs の `site/` は `.gitignore` の対象にしてください。
+- 生成物は原則としてコミットせず、MkDocs の `site/` は `.gitignore` の対象にしてください。GitHub Pages の公開状態を保持する `pages-content` ブランチだけは例外とします。
 - 公開設定や CI/CD を追加する場合は、権限、秘密情報、公開先、失敗時の復旧方法を確認してください。
 
 ## セキュリティとプライバシー

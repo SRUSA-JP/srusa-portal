@@ -4,6 +4,9 @@ on:
   issue_comment:
     types:
       - created
+  pull_request_target:
+    types:
+      - closed
   workflow_dispatch:
     inputs:
       pull_request_number:
@@ -15,8 +18,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-preview-${{ inputs.pull_request_number || github.event.issue.number }}
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   resolve-pull-request:
@@ -131,37 +134,78 @@ jobs:
       - build
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Validate Cloudflare credentials
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          path: pages-content
+
+      - name: Prepare Pages content branch
+        working-directory: pages-content
         run: |
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo 'CLOUDFLARE_ACCOUNT_ID と CLOUDFLARE_API_TOKEN を Repository secrets に登録してください。' >&2
-            exit 1
+          if git fetch origin pages-content:refs/remotes/origin/pages-content; then
+            git switch --create pages-content --track origin/pages-content
+          else
+            git switch --orphan pages-content
+            git rm -rf .
           fi
 
       - name: Receive built site
         uses: actions/download-artifact@v8
         with:
           name: pr-preview-${{ needs.resolve-pull-request.outputs.pull-request-number }}-${{ github.run_id }}
-          path: site
+          path: preview-site
 
-      - name: Deploy to Cloudflare Pages
-        id: deploy
-        uses: cloudflare/wrangler-action@v4
+      - name: Update preview content
+        env:
+          PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
+        run: |
+          preview_directory="pages-content/previews/pr-${PULL_REQUEST_NUMBER}"
+          rm -rf "$preview_directory"
+          mkdir -p "$preview_directory"
+          cp -R preview-site/. "$preview_directory/"
+          touch pages-content/.nojekyll
+
+      - name: Save Pages content
+        working-directory: pages-content
+        env:
+          PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          if ! git diff --cached --quiet; then
+            git commit -m "[update]PR #${PULL_REQUEST_NUMBER} のPreviewを更新"
+            git push origin HEAD:pages-content
+          fi
+
+      - name: Prepare GitHub Pages artifact
+        run: rsync -a --exclude '.git/' pages-content/ publish-output/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=srusa-portal --branch=pr-${{ needs.resolve-pull-request.outputs.pull-request-number }}
+          path: publish-output
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
 
       - name: Add preview link to pull request
+        id: preview-link
         uses: actions/github-script@v9
         env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           PULL_REQUEST_NUMBER: ${{ needs.resolve-pull-request.outputs.pull-request-number }}
           HEAD_SHA: ${{ needs.resolve-pull-request.outputs.head-sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -169,12 +213,22 @@ jobs:
           script: |
             const marker = '<!-- srusa-portal-pr-preview -->';
             const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
-            const previewUrl = process.env.PREVIEW_URL;
+            const pageUrlValue = process.env.PAGE_URL;
 
-            if (!previewUrl?.startsWith('https://')) {
-              core.setFailed('Cloudflare Pages の Preview URL を取得できませんでした。');
+            if (!pageUrlValue?.startsWith('https://')) {
+              core.setFailed('GitHub Pages のURLを取得できませんでした。');
               return;
             }
+
+            const pageUrl = pageUrlValue.endsWith('/')
+              ? pageUrlValue
+              : `${pageUrlValue}/`;
+            const previewUrl = new URL(
+              `previews/pr-${pullRequestNumber}/`,
+              pageUrl
+            ).href;
+
+            core.setOutput('preview-url', previewUrl);
 
             const body = [
               marker,
@@ -215,7 +269,7 @@ jobs:
 
       - name: Add preview link to workflow summary
         env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          PREVIEW_URL: ${{ steps.preview-link.outputs.preview-url }}
         run: |
           echo '## Pull Request Preview' >> "$GITHUB_STEP_SUMMARY"
           echo "[Open preview]($PREVIEW_URL)" >> "$GITHUB_STEP_SUMMARY"
@@ -280,3 +334,74 @@ jobs:
                 body,
               });
             }
+
+  cleanup-preview:
+    name: Remove closed pull request preview
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: pages-content
+
+      - name: Load Pages content branch
+        id: pages-content
+        working-directory: pages-content
+        run: |
+          if git fetch origin pages-content:refs/remotes/origin/pages-content; then
+            git switch --create pages-content --track origin/pages-content
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Remove preview content
+        id: remove-preview
+        if: steps.pages-content.outputs.exists == 'true'
+        working-directory: pages-content
+        env:
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          preview_directory="previews/pr-${PULL_REQUEST_NUMBER}"
+          if [ -d "$preview_directory" ]; then
+            rm -rf "$preview_directory"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add --all
+            git commit -m "[remove]PR #${PULL_REQUEST_NUMBER} のPreviewを削除"
+            git push origin HEAD:pages-content
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare GitHub Pages artifact
+        if: steps.remove-preview.outputs.changed == 'true'
+        run: rsync -a --exclude '.git/' pages-content/ publish-output/
+
+      - name: Configure GitHub Pages
+        if: steps.remove-preview.outputs.changed == 'true'
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        if: steps.remove-preview.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: publish-output
+
+      - name: Deploy to GitHub Pages
+        if: steps.remove-preview.outputs.changed == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v5
