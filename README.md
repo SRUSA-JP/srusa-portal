@@ -16,12 +16,14 @@ SRUSAの情報をまとめる、MkDocsベースの小さなポータルサイト
 
 ## サイト構成
 
-| ナビゲーション | ファイル |
+| コンテンツ | ファイル |
 | --- | --- |
 | ホーム | `docs/index.md` |
 | 登山部 | `docs/mountaineering/` |
 
-新しいトップレベルナビゲーション、サイト固有のデザイン、公開URLや独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
+ナビゲーションは`docs/`のディレクトリとMarkdownファイルから自動生成します。個別ページのパスは`mkdocs.yml`へ列挙しません。ディレクトリ名がセクション名に使われるため、現在のトップタブは`Mountaineering`、入口ページのタイトルは「登山部」と表示されます。
+
+`docs/`直下へのページやディレクトリの追加、サイト固有のデザイン、公開URLや独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
 
 ## 開発環境
 
@@ -86,7 +88,7 @@ Pull Requestでは、必要に応じて`preview`とコメントするとGitHub P
 - [コントリビューションガイド](CONTRIBUTING.md): 変更、検証、コミット、Pull Requestのルール
 - [運用ガイド](OPERATIONS.md): GitHub Pagesの本番・Preview公開と切り戻し
 - [AIエージェント向け作業ガイド](AGENTS.md): AIが変更するときの範囲と禁止事項
-- [`mkdocs.yml`](mkdocs.yml): サイト設定とナビゲーション
+- [`mkdocs.yml`](mkdocs.yml): サイト、テーマ、自動ナビゲーションの設定
 - [`requirements.txt`](requirements.txt): 固定したPython依存関係
 
 ## 管理しないもの

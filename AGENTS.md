@@ -28,14 +28,15 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 
 - 静的サイトジェネレーターはMkDocs、テーマはMaterial for MkDocsを使用する
 - コンテンツは`docs/`、登山部は`docs/mountaineering/`で管理する
-- トップレベルナビゲーションは「ホーム」と「登山部」を維持する
+- `mkdocs.yml`に`nav`を定義せず、ナビゲーションは`docs/`の構成から自動生成する
+- `navigation.indexes`を有効にし、各ディレクトリの`index.md`をセクションの入口として扱う
 - Python依存関係は`requirements.txt`で固定し、Python 3.11を使用する
 - Dev ContainerはZedとVS Codeのどちらでも利用できる状態を維持する
 - 本番サイトとPull Request PreviewはGitHub Pagesで公開する
 - `pages-content`はデプロイ専用ブランチとし、`main`へマージしない
 - Cloudflare Pagesは未導入として扱う
 
-新しいトップレベルナビゲーション、依存関係、公開先を追加する場合は、未決事項として影響を提示し、ユーザーの合意を得てから変更してください。
+`docs/`直下へのページやディレクトリの追加、依存関係、公開先を追加する場合は、未決事項としてナビゲーション、URL、運用への影響を提示し、ユーザーの合意を得てから変更してください。表示名や並び順を固定する目的で`nav`を再追加しないでください。
 
 ## コンテンツ作成時の制約
 
