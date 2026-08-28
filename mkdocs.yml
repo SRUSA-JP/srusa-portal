@@ -7,16 +7,10 @@ theme:
   features:
     - navigation.tabs
     - navigation.tabs.sticky
+    - navigation.indexes
 
 plugins:
   - search:
       lang: ja
-
-nav:
-  - ホーム: index.md
-  - 登山部:
-      - 登山部: mountaineering/index.md
-      - 活動記録:
-          - 大菩薩嶺（2026年7月4日）: mountaineering/活動記録/20260704.md
 
 strict: true

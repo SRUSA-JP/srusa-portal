@@ -137,7 +137,6 @@ jobs:
       contents: write
       issues: write
       pages: write
-      pull-requests: write
       statuses: write
       id-token: write
     environment:
@@ -317,7 +316,6 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: write
       statuses: write
     steps:
       - name: Add failure link to pull request checks
