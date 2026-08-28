@@ -31,6 +31,8 @@ Pythonのバージョンは`.python-version`で3.11に固定しています。De
 
 Dockerと、Dev Containerに対応したエディターを用意します。
 
+最初にターミナルで`docker version`を実行し、ClientとServerの両方が表示されることを確認します。Serverへの接続エラーが表示された場合は、Docker DesktopまたはDocker daemonを起動してからやり直してください。
+
 - Zed: リポジトリを開いたときに表示される`Open in Container`を選びます。表示されない場合は、コマンドパレットの`Project: Open Remote`からDev Containerを選びます。
 - VS Code: Dev Containers拡張機能を導入し、コマンドパレットから`Dev Containers: Reopen in Container`を実行します。
 

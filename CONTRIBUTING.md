@@ -21,10 +21,12 @@ React、Node.js、Viteなどを使うアプリケーションや、そのビル�
    ```shell
    git switch main
    git pull --ff-only
-   git switch -c issue-<Issue番号>-<短い説明>
+   git switch -c issue-123-short-description
    ```
 
 3. 1つのPull Requestには、1つの目的に必要な変更だけを含めます。
+
+例の`123`は実際のIssue番号、`short-description`は変更内容を表す短い英語に置き換えます。
 
 新しいトップレベルナビゲーション、依存関係、公開先を追加する場合は、URLや運用への影響をIssueで確認してから実装してください。
 
@@ -76,6 +78,13 @@ git diff --check
 
 変更理由を追いやすい、小さく完結した単位でコミットしてください。生成される `site/` はコミットしません。
 
+変更したファイルだけを明示してステージし、コミットします。次は`docs/index.md`を変更した場合の例です。
+
+```shell
+git add docs/index.md
+git commit -m '[update]ホームの案内を更新'
+```
+
 ## Pull Requestを作成する
 
 Pull Requestには次を記載します。
@@ -86,3 +95,14 @@ Pull Requestには次を記載します。
 - 未決事項、未実施の確認、運用上の注意
 
 必要に応じて、Pull Requestへ `preview` とコメントしてGitHub Pages Previewを公開します。詳しい手順は[運用ガイド](OPERATIONS.md)を参照してください。
+
+コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue-123-short-description`ブランチの例です。
+
+```shell
+git push -u origin issue-123-short-description
+```
+
+1. GitHubでこのリポジトリを開き、`Compare & pull request`を選ぶ
+2. baseが`main`、compareがpushした作業ブランチであることを確認する
+3. 変更目的、関連Issue、検証結果、未決事項を本文に記載する
+4. 内容を確認してPull Requestを作成する
