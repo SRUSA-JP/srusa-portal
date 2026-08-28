@@ -19,7 +19,7 @@
 4. 公開ジョブが`pages-content`を更新する
 5. `pages-content`全体をGitHub Pagesへデプロイする
 
-本番とPreviewは同じ`pages` concurrency groupを使用し、`pages-content`の同時更新を避けます。現在の処理に外部サービスのtokenやRepository secretsは不要です。
+本番とPreviewは同じ`pages` concurrency groupを使用し、`pages-content`の同時更新を避けます。`cancel-in-progress: false`により実行中のrunは取り消しませんが、保留できるrunは1件だけであり、新しいrunが既存の保留runを置き換える場合があります。そのため、`main`へpushした後は本番デプロイの成功を確認してください。現在の処理に外部サービスのtokenやRepository secretsは不要です。
 
 ## 初回設定
 
