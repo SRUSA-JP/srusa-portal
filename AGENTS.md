@@ -27,7 +27,8 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 ## 維持する仕様
 
 - 静的サイトジェネレーターはMkDocs、テーマはMaterial for MkDocsを使用する
-- コンテンツは`docs/`、登山部は`docs/mountaineering/`で管理する
+- コンテンツは`docs/`、登山部は`docs/登山部/`、マインクラフトは`docs/マインクラフト/`で管理する
+- トップタブは「このサーバーについて」「登山部」「マインクラフト」とする
 - `mkdocs.yml`に`nav`を定義せず、ナビゲーションは`docs/`の構成から自動生成する
 - `navigation.indexes`を有効にし、各ディレクトリの`index.md`をセクションの入口として扱う
 - Python依存関係は`requirements.txt`で固定し、Python 3.11を使用する
