@@ -16,6 +16,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Validate production branch
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo '手動実行では main ブランチを選択してください。' >&2
+          exit 1
+
       - name: Check out repository
         uses: actions/checkout@v6
 
