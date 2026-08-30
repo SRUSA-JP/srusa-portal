@@ -15,18 +15,27 @@ React、Node.js、Viteなどを使うアプリケーションや、そのビル�
 
 ## 変更を始める
 
-1. 既存の Issue で目的と範囲を確認します。対応する Issue がなければ、実装前に作成します。
-2. 最新の `main` から、Issue番号を含むブランチを作成します。
+新しい機能の実装や影響の大きい改修を始める前に、対応する Issue を作成します。既存の Issue に対応する場合は、目的と範囲を確認します。
 
-   ```shell
-   git switch main
-   git pull --ff-only
-   git switch -c issue-123-short-description
-   ```
+目的と影響範囲が明確で短時間にレビューできる小規模な変更では、Issueを省略できます。次はその例であり、これらに限定しません。
 
-3. 1つのPull Requestには、1つの目的に必要な変更だけを含めます。
+- ファイル名や表示名の単純なリネーム
+- 原因と修正箇所が明確な軽微なバグ修正
+- 既存方針を変えない範囲での`mkdocs.yml`の小規模な調整
 
-例の`123`は実際のIssue番号、`short-description`は変更内容を表す短い英語に置き換えます。
+小規模に見える変更でも、トップレベルのナビゲーションやURL、依存関係、公開先、権限、セキュリティ、プライバシーに影響する場合は、実装前にIssueで影響を確認します。
+
+Issueに対応する場合は、最新の `main` から、`issue/<Issue番号>` という名前のブランチを作成します。
+
+```shell
+git switch main
+git pull --ff-only
+git switch -c issue/123
+```
+
+1つのPull Requestには、1つの目的に必要な変更だけを含めます。
+
+例の`123`は実際のIssue番号に置き換えます。ブランチ名には説明文を追加せず、Issue番号だけを使用します。
 
 `docs/`直下に新しいページやディレクトリを追加すると、トップレベルナビゲーションにも自動的に追加されます。依存関係や公開先の追加と同様に、URLや運用への影響をIssueで確認してから実装してください。
 
@@ -98,10 +107,10 @@ Pull Requestには次を記載します。
 
 必要に応じて、Pull Requestへ `preview` とコメントしてGitHub Pages Previewを公開します。詳しい手順は[運用ガイド](OPERATIONS.md)を参照してください。
 
-コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue-123-short-description`ブランチの例です。
+コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue/123`ブランチの例です。
 
 ```shell
-git push -u origin issue-123-short-description
+git push -u origin issue/123
 ```
 
 1. GitHubでこのリポジトリを開き、`Compare & pull request`を選ぶ
