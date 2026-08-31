@@ -1,6 +1,6 @@
 # srusa-portal AIエージェント作業ガイド
 
-この文書は、AIエージェントがこのリポジトリを変更するときの固有ルールです。人を含む共通の変更手順は[CONTRIBUTING.md](CONTRIBUTING.md)、公開・復旧手順は[OPERATIONS.md](OPERATIONS.md)を参照してください。
+この文書は、AIエージェントがこのリポジトリを変更するときの固有ルールです。人を含む共通の変更手順とコーディングルールは[CONTRIBUTING.md](CONTRIBUTING.md)、公開・復旧手順は[OPERATIONS.md](OPERATIONS.md)を参照してください。この文書へ共通ルールを重複して記載しません。
 
 ## 作業を始める前に
 
@@ -13,11 +13,12 @@
 
 ## 変更できる範囲
 
-このリポジトリはMkDocs専用です。主な変更対象は、Markdownコンテンツ、MkDocs設定、Python依存関係、Dev Container、GitHub Actions、開発・運用ドキュメントです。
+このリポジトリのコンテンツ生成はMkDocs専用です。主な変更対象は、Markdownコンテンツ、MkDocs設定、Python依存関係、Cloudflare Pagesの認証ミドルウェア、Dev Container、公開設定、開発・運用ドキュメントです。
 
 次のものは追加しないでください。
 
 - React、Node.js、Viteなどを使うアプリケーション
+- Basic認証以外の動的機能を担うPages FunctionsやWorker
 - Sandboxのソースコード、タグ、コンテナイメージ、ビルド成果物
 - 生成された`site/`
 - token、secret、credential、private key、個人用`.env`、セッション、ログ
@@ -34,9 +35,11 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 - `navigation.indexes`を有効にし、各ディレクトリの`index.md`をセクションの入口として扱う
 - Python依存関係は`requirements.txt`で固定し、Python 3.11を使用する
 - Dev ContainerはZedとVS Codeのどちらでも利用できる状態を維持する
-- 本番サイトとPull Request PreviewはGitHub Pagesで公開する
-- `pages-content`はデプロイ専用ブランチとし、`main`へマージしない
-- Cloudflare Pagesは未導入として扱う
+- 本番サイトとブランチPreviewはCloudflare Pagesで公開する
+- `functions/_middleware.js`で全公開経路へ共有Basic認証を適用する
+- Basic認証のユーザー名とパスワードはCloudflareの暗号化Secretだけに保存し、コード、Issue、ログへ記載しない
+- Secretがない場合と認証処理に失敗した場合はfail-closedとし、静的コンテンツを公開しない
+- GitHub Pagesと`pages-content`はIssue #6の移行確認中だけ切り戻し先として維持し、確認後に廃止する
 
 `docs/`直下へのページやディレクトリの追加、依存関係、公開先を追加する場合は、未決事項としてナビゲーション、URL、運用への影響を提示し、ユーザーの合意を得てから変更してください。表示名や並び順を固定する目的で`nav`を再追加しないでください。
 
@@ -52,6 +55,7 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 ## 作業の進め方
 
 - 目的に必要な範囲で、小さくレビューしやすい変更を作る
+- 実装時は`CONTRIBUTING.md`のコーディングルールに従う
 - 実行可能な手順を変更したら、READMEと関連ガイドも更新する
 - 公開設定を変更する場合は、権限、秘密情報、公開先、失敗時の復旧方法を確認する
 - Issueのcloseやreopen、Pull Requestのcloseなどの状態変更は、ユーザーから明示的な指示がある場合だけ行う
@@ -68,4 +72,4 @@ mkdocs build --strict
 git diff --check
 ```
 
-さらに、READMEと実際の構成・コマンド、Markdownリンクとナビゲーション、秘密情報や不要な生成物の混入を確認してください。実行できなかった確認は、理由と影響をPull Requestに記載します。
+さらに、`CONTRIBUTING.md`に記載された変更対象別の検証、READMEと実際の構成・コマンド、Markdownリンクとナビゲーション、秘密情報や不要な生成物の混入を確認してください。実行できなかった確認は、理由と影響をPull Requestに記載します。

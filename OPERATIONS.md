@@ -1,108 +1,139 @@
 # 運用ガイド
 
-この文書は、現在使用しているGitHub Pagesの公開方法と、問題が起きたときの確認・復旧方法をまとめます。
+この文書は、Cloudflare PagesでMkDocsサイトを公開し、共有Basic認証を設定・変更・復旧する方法をまとめます。GitHub PagesはIssue #6の移行確認が終わるまで切り戻し先として維持します。
 
-## 現在の公開構成
+## 公開構成
 
-本番サイトとPull Request Previewは、どちらもGitHub Pagesで公開します。Cloudflare Pagesは導入していません。
-
-| 対象 | 起点 | 保存先 | 公開先 |
+| 対象 | 起点 | 公開先 | 認証 |
 | --- | --- | --- | --- |
-| 本番サイト | `main`へのpush、または手動実行 | `pages-content`のルート | GitHub PagesのルートURL |
-| Pull Request Preview | PRの`preview`コメント、または手動実行 | `pages-content/previews/pr-<PR番号>/` | GitHub Pages配下のPR別URL |
+| Cloudflare Production | `main`へのpush | `https://srusa-portal.pages.dev/` | Pages Functionsの共有Basic認証 |
+| Cloudflare Preview | `main`以外へのpush | ブランチaliasとデプロイ固有URL | Pages Functionsの共有Basic認証 |
+| GitHub Pages | 移行完了まで既存Workflowを維持 | `https://srusa-jp.github.io/srusa-portal/` | なし。移行中だけの切り戻し先 |
 
-公開処理は次の順序で進みます。
+Cloudflare PagesプロジェクトはGitHubの`SRUSA-JP/srusa-portal`と連携し、Production branchに`main`を使用します。
 
-1. 対象のソースを読み取り専用権限でcheckoutする
-2. Python 3.11と`requirements.txt`を使い、`mkdocs build --strict`を実行する
-3. 生成した`site/`を短期間のGitHub Actions artifactとして受け渡す
-4. 公開ジョブが`pages-content`を更新する
-5. `pages-content`全体をGitHub Pagesへデプロイする
+| 設定 | 値 |
+| --- | --- |
+| Project name | `srusa-portal` |
+| Build command | `npm test && python -m pip install -r requirements.txt && mkdocs build --strict` |
+| Build output directory | `site` |
+| Root directory | リポジトリルート |
+| Python | `.python-version`の3.11 |
 
-本番とPreviewは同じ`pages` concurrency groupを使用し、`pages-content`の同時更新を避けます。`cancel-in-progress: false`により実行中のrunは取り消しませんが、保留できるrunは1件だけであり、新しいrunが既存の保留runを置き換える場合があります。そのため、`main`へpushした後は本番デプロイの成功を確認してください。現在の処理に外部サービスのtokenやRepository secretsは不要です。
+## Basic認証の仕組み
 
-## 初回設定
+`functions/_middleware.js`はすべてのリクエストより前に実行されます。
 
-GitHubのリポジトリ画面で、`Settings` → `Pages` → `Build and deployment` → `Source`を開き、`GitHub Actions`を選択します。
+1. Cloudflareの暗号化Secretからユーザー名とパスワードを取得する
+2. Secretが未設定なら`503 Service Unavailable`を返し、コンテンツを公開しない
+3. Authorizationヘッダーがない、壊れている、または資格情報が違う場合は`401 Unauthorized`を返す
+4. 正しい場合だけMkDocsの静的ファイルへ処理を渡す
+5. 認証後のレスポンスへ`Cache-Control: private, no-store`と`Vary: Authorization`を付ける
 
-ワークフローに必要な権限は各YAMLの`permissions`で宣言しています。権限を追加する変更では、目的に必要な最小範囲になっていることをレビューしてください。
+Basic認証は共有資格情報を知る人を同じ利用者として扱います。利用者ごとの失効、所属確認、ロール確認、詳細な監査には使用できません。Discordによる正式な認証・認可は後続MVPで扱います。
 
-## 本番サイトを公開する
+Pages FunctionsのリクエストはWorkers Freeプランの上限へ算入されます。認証に必要なFunctionsが実行できない場合に静的ファイルを公開しないよう、Pagesプロジェクトの`Settings` → `Runtime` → `Fail open/closed`は`Fail closed`にします。
 
-[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)は、`main`へのpushで自動実行されます。手動で再実行する場合は次の手順を使います。
+## Secretを登録する
 
-1. GitHubの`Actions`タブで`Deploy MkDocs to GitHub Pages`を開く
-2. `Run workflow`を選ぶ
-3. 対象ブランチが`main`であることを確認して実行する
-4. buildとdeployの両ジョブが成功したことを確認する
-5. deployジョブの`github-pages` environmentから公開URLを開く
+Secretの値をIssue、Pull Request、コミット、ログへ書かないでください。チャットで共有せず、Cloudflare Dashboardへ直接入力します。
 
-## Pull Request Previewを公開する
+1. Cloudflare Dashboardの`Workers & Pages`を開く
+2. `srusa-portal`を開く
+3. `Settings` → `Variables and Secrets`を開く
+4. Preview環境へ次の2つを追加し、それぞれ`Encrypt`を選ぶ
+   - `BASIC_AUTH_USERNAME`
+   - `BASIC_AUTH_PASSWORD`
+5. Production環境にも同じ名前の2つを追加し、それぞれ`Encrypt`を選ぶ
+6. 保存後、新しいデプロイを実行する。Secret登録前のデプロイには新しいSecretが反映されない
 
-[`.github/workflows/build-pr.yml`](.github/workflows/build-pr.yml)は、同じリポジトリ内のopenなPull Requestを対象にします。forkからのPull Requestには対応していません。
+ユーザー名にはコロンを使用しません。パスワードは十分に長いランダムな値にし、他サービスと共用しません。共有先から外す人が出た場合や漏えいが疑われる場合は、パスワードを変更して再デプロイします。
 
-通常は対象Pull Requestの`Conversation`に、次の1行だけをコメントします。
+## Previewで切り替えを確認する
 
-```text
-preview
-```
+Cloudflare AccessからProductionとPreviewを同時に外さず、先にPreviewだけでBasic認証を確認します。
 
-`/preview`でも実行できます。コメントから実行できるのは、このリポジトリにwrite、maintain、adminのいずれかの権限を持つユーザーです。
+1. `issue/6`へ実装をpushし、Cloudflare PagesのPreviewデプロイ成功を確認する
+2. Preview用Secretが設定された状態で、新しいデプロイを実行する
+3. Zero Trustの`Access controls` → `Applications`から`srusa-portal - Cloudflare Pages`を開く
+4. Destinationの`*.srusa-portal.pages.dev`だけを外し、Productionの`srusa-portal.pages.dev`は残して保存する
+5. シークレットウィンドウでブランチalias URLを開き、ブラウザのBasic認証ダイアログが出ることを確認する
+6. 誤った資格情報では表示できず、正しい資格情報で表示できることを確認する
+7. `/登山部/`、`/search/search_index.json`、CSSなどの静的asset、`/mountaineering/`も直接開いて同じ認証が必要なことを確認する
 
-GitHub Actionsから手動実行する場合は次の手順を使います。
+想定するHTTP応答は次のとおりです。
 
-1. `Actions`タブで`Publish pull request preview`を開く
-2. `Run workflow`を選び、実行対象ブランチを`main`のままにする
-3. `pull_request_number`にopenなPull Requestの番号を入力する
-4. 実行完了後、PRの`preview/github-pages` checkまたは案内コメントからPreviewを開く
+| 条件 | 応答 |
+| --- | --- |
+| Secret未設定 | `503` |
+| Authorizationなし | `401`と`WWW-Authenticate: Basic` |
+| 誤った資格情報 | `401` |
+| 正しい資格情報 | 元の静的コンテンツの応答 |
 
-同じPull Requestで再実行してもPreview URLは変わりません。Pull Requestを閉じると、対応するPreviewを`pages-content`から削除し、残りの本番サイトとPreviewを再公開します。
+## Productionへ切り替える
 
-## `pages-content`ブランチ
+1. Previewの確認結果をPull RequestとIssue #6へ記録する
+2. Production用Secretを登録済みであることを確認する
+3. Pull Requestを`main`へマージする
+4. Cloudflare PagesのProductionデプロイが成功したことを確認する
+5. Cloudflare Accessでログインした状態からProduction URLを開き、その先でBasic認証が動作することを確認する
+6. Basic認証の正常系と異常系を確認した後、`srusa-portal - Cloudflare Pages`のAccess Applicationを削除する
+7. シークレットウィンドウからProductionとPreviewを再確認し、Cloudflare AccessではなくBasic認証だけが表示されることを確認する
 
-`pages-content`は、GitHub Pagesへ公開する状態だけを保持するデプロイ専用ブランチです。
+Access Applicationを削除する前に、ProductionとPreviewのSecret、デプロイ、Basic認証を必ず確認します。削除後に問題が起きた場合は、同じhostnameをDestinationに持つAccess ApplicationとAllow Policyを再作成します。
 
-- 通常の開発ブランチとして使用しない
-- Pull Requestのbaseにしない
-- `main`へマージしない
-- 通常は手作業で編集せず、GitHub Actionsから更新する
-- 本番サイトはルート、Previewは`previews/pr-<PR番号>/`に保存する
+## 資格情報を変更する
 
-ブランチが存在しない初回は、公開ワークフローがorphan branchとして作成します。
+1. PreviewとProductionの`BASIC_AUTH_PASSWORD`を新しい値へ更新する
+2. Previewを再デプロイし、新旧パスワードの挙動を確認する
+3. Productionを再デプロイする
+4. Productionで新しいパスワードだけが使えることを確認する
+5. 新しいパスワードを許可する利用者だけに安全な経路で共有する
+
+ユーザー名も同様に変更できます。ブラウザが古い資格情報を保持している場合は、シークレットウィンドウを使うかブラウザを完全に終了して確認します。
 
 ## 問題を確認する
 
-GitHubの`Actions`タブで失敗したrunを開き、最初に失敗したstepから確認します。
-
 | 症状 | 主な確認先 | 対応 |
 | --- | --- | --- |
-| MkDocsのビルド失敗 | `Build site` | エラーになった設定、Markdown、リンクを修正して再実行する |
-| artifactの受け渡し失敗 | upload/download artifactのstep | buildが`site/`を生成したか確認し、runを再実行する |
-| `pages-content`の更新失敗 | `Prepare Pages content branch`、`Save Pages content` | ブランチの存在、Actionsのcontents権限、同時実行の有無を確認する |
-| GitHub Pagesのデプロイ失敗 | configure/upload/deploy Pagesのstep | PagesのSource設定とGitHubの障害情報を確認して再実行する |
-| Previewの案内だけ表示されない | status/commentのstep | PR番号、権限、ワークフローrunのURLを確認する |
-
-Previewのビルドまたは公開に失敗した場合は、PRのcheckと案内コメントから失敗したrunを開けます。原因を修正してから、もう一度`preview`とコメントしてください。
+| `503`になる | Preview／ProductionのSecret | 2つのSecretを対象環境へ登録し、新しいデプロイを実行する |
+| Basic認証が出ずAccess画面になる | Zero Trust Access Application | 対象hostnameがまだAccessのDestinationに残っていないか確認する |
+| 正しい資格情報でも`401`になる | Secret名、対象環境、ブラウザの保存値 | Secret名を一致させ、再デプロイ後にシークレットウィンドウで確認する |
+| Functionsの上限到達時に公開される | PagesのRuntime設定 | `Fail closed`へ変更する |
+| MkDocsのビルドに失敗する | Cloudflare Deploymentsのbuild log | Basic認証テスト、依存関係のinstall、`mkdocs build --strict`の順に最初の失敗を直す |
 
 ## 切り戻す
 
-### 本番サイト
+### GitHub Pagesを停止する前
 
-1. 直前に正常だったコミットと、問題を起こした変更を確認する
-2. 問題のコミットを打ち消すrevert用Pull Requestを作成する
-3. `mkdocs build --strict`と必要なPreview確認を行う
-4. `main`へマージし、自動デプロイの完了を確認する
+1. GitHub Pagesの公開URLが表示できることを確認する
+2. Cloudflare Access ApplicationへProductionとPreviewのDestinationを戻す
+3. Basic認証の実装またはSecretを修正し、Previewから再確認する
 
-緊急時に既知の正常なGitHub Actions runを再実行することもできますが、原因を追跡できるように`main`の修正を残してください。履歴を書き換えるresetや、`pages-content`の手動上書きを通常の切り戻し方法にはしません。
+GitHub Pagesは一般公開のため、切り戻し中も限定公開情報を載せません。
 
-### Pull Request Preview
+### GitHub Pagesを停止した後
 
-変更を修正して`preview`を再実行します。不要になったPreviewはPull Requestを閉じると自動削除されます。削除ジョブが失敗した場合は、失敗したrunをGitHub Actionsから再実行します。
+1. Cloudflare Pagesの直前に正常だったデプロイを確認する
+2. 問題を起こしたコミットをrevertするPull Requestを作る
+3. 必要ならAccess Applicationを再作成し、Basic認証修正中の保護に使う
+4. `main`へマージし、Productionデプロイを確認する
+
+## GitHub Pagesを停止する
+
+この作業はCloudflare ProductionとPreviewのBasic認証、主要URL、復旧手順を確認した後に行います。
+
+1. `.github/workflows/deploy-pages.yml`と`.github/workflows/build-pr.yml`を削除するPull Requestを作成する
+2. GitHubの`Settings` → `Pages`で公開を停止する
+3. `https://srusa-jp.github.io/srusa-portal/`からコンテンツを取得できないことを確認する
+4. `pages-content`ブランチが不要であることを確認して削除する
+5. README、OPERATIONS、AGENTSから移行中の記述を削除する
+6. Issue #6と親Issue #1へ停止結果とCloudflareへの切り戻し方法を記録する
+
+GitHub Pagesの停止と`pages-content`ブランチ削除は復旧経路を減らすため、Cloudflare側の確認前には行いません。
 
 ## 公開情報と外部サービス
 
-本番サイトとPull Request Previewは公開URLです。認証情報、個人情報、限定公開情報を含めないでください。写真、地図、位置情報、行動記録は、公開範囲と本人の同意を確認してから追加します。
+Basic認証は暫定的な閲覧制限であり、リポジトリのソース自体は公開されています。認証情報、個人情報、公開について同意を確認していない写真・位置情報・行動記録をコミットしません。
 
-SRUSA Sandboxは別リポジトリ・別サービスで管理します。このポータルは外部リンクだけを掲載し、Sandboxのソース、タグ、コンテナイメージ、ビルド成果物を取得・保存・デプロイしません。Sandbox側の障害やリリースはSandbox側で対応し、URLが変わった場合だけポータルのリンクを更新します。
-
-Cloudflare Pagesへの移行は未決定です。移行を決めるまでは、Cloudflareのプロジェクト、token、ワークフロー、移行手順をこのリポジトリの現行運用として追加しません。
+SRUSA Sandboxは別リポジトリ・別サービスで管理します。このポータルは外部リンクだけを掲載し、Sandboxのソース、タグ、コンテナイメージ、ビルド成果物を取得・保存・デプロイしません。

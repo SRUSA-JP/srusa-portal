@@ -1,0 +1,14 @@
+{
+  "name": "srusa-portal",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#functions/*": "./functions/*"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

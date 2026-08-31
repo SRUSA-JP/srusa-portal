@@ -7,6 +7,8 @@
 - `docs/` 配下の Markdown コンテンツ
 - `mkdocs.yml`のサイト、テーマ、自動ナビゲーション設定
 - `requirements.txt` の Python 依存関係
+- `package.json`のJavaScriptモジュール・テスト設定
+- `functions/_middleware.js`のCloudflare Pages認証ミドルウェア
 - `.devcontainer/` の共通開発環境
 - `.github/workflows/` のビルド・公開設定
 - リポジトリ内の開発・運用ドキュメント
@@ -15,18 +17,27 @@ React、Node.js、Viteなどを使うアプリケーションや、そのビル�
 
 ## 変更を始める
 
-1. 既存の Issue で目的と範囲を確認します。対応する Issue がなければ、実装前に作成します。
-2. 最新の `main` から、Issue番号を含むブランチを作成します。
+新しい機能の実装や影響の大きい改修を始める前に、対応する Issue を作成します。既存の Issue に対応する場合は、目的と範囲を確認します。
 
-   ```shell
-   git switch main
-   git pull --ff-only
-   git switch -c issue-123-short-description
-   ```
+目的と影響範囲が明確で短時間にレビューできる小規模な変更では、Issueを省略できます。次はその例であり、これらに限定しません。
 
-3. 1つのPull Requestには、1つの目的に必要な変更だけを含めます。
+- ファイル名や表示名の単純なリネーム
+- 原因と修正箇所が明確な軽微なバグ修正
+- 既存方針を変えない範囲での`mkdocs.yml`の小規模な調整
 
-例の`123`は実際のIssue番号、`short-description`は変更内容を表す短い英語に置き換えます。
+小規模に見える変更でも、トップレベルのナビゲーションやURL、依存関係、公開先、権限、セキュリティ、プライバシーに影響する場合は、実装前にIssueで影響を確認します。
+
+Issueに対応する場合は、最新の `main` から、`issue/<Issue番号>` という名前のブランチを作成します。
+
+```shell
+git switch main
+git pull --ff-only
+git switch -c issue/123
+```
+
+1つのPull Requestには、1つの目的に必要な変更だけを含めます。
+
+例の`123`は実際のIssue番号に置き換えます。ブランチ名には説明文を追加せず、Issue番号だけを使用します。
 
 `docs/`直下に新しいページやディレクトリを追加すると、トップレベルナビゲーションにも自動的に追加されます。依存関係や公開先の追加と同様に、URLや運用への影響をIssueで確認してから実装してください。
 
@@ -49,7 +60,20 @@ React、Node.js、Viteなどを使うアプリケーションや、そのビル�
 - 個人用の `.env`、セッション、ログ、キャッシュ
 - 公開について同意を確認していない個人情報、写真、位置情報、行動記録
 
-Pull Request Previewも公開URLです。「URLを知っている人だけに共有する」場合でも、外部公開されて困る情報は含めないでください。
+Cloudflare Pages Previewは共有Basic認証の対象ですが、資格情報を知る利用者が閲覧できます。また、リポジトリ自体は公開されています。外部公開されて困る情報は含めないでください。
+
+## JavaScriptを編集する
+
+- JavaScriptはES Modules形式で記述し、モジュール形式は`package.json`の`type`で指定します。
+- 関数は、外部APIが特定の宣言形式を要求する場合を除き、アロー関数で定義します。
+- 外部へexportする公開関数には、目的、引数、戻り値を説明するJSDocを記述します。
+- 外部サービスから独立したルールが増えた場合は、入口を薄いアダプターにして内側へ分離します。外部サービスのRequestやSecretに強く依存する小さな処理は、意味のない層へ分割しません。
+- 関連する状態と処理をまとめる場合は、factory関数内へ非公開処理を閉じ込め、利用側に必要な操作だけをオブジェクトとして返します。
+- Cloudflare Pages Functionsのテストは、デプロイ対象へ混ぜず、兄弟ディレクトリの`functionsTest/`へ置きます。実装ファイルとテストファイルは`<名前>.js`と`<名前>.test.js`で1対1に対応させます。
+- リポジトリ内モジュールのimportには、`package.json`で定義した`#functions/`などのaliasを使用し、呼び出し元からの相対パスを使用しません。
+- 振る舞いを変更するときは、期待する振る舞いをテストで表現し、実装と同じ変更内で成功させます。
+- 責務のない層やクラスは追加せず、現在の規模で分離する意味がある境界だけを作ります。
+- 実行時依存関係を追加する場合は、Issueで必要性、公開処理、保守への影響を確認します。
 
 ## 検証する
 
@@ -66,6 +90,12 @@ git diff --check
 - 内部リンクと外部リンクが意図したURLを指している
 - `site/`、仮想環境、ログ、秘密情報が差分に含まれていない
 - READMEの手順と実際のファイル・コマンドが一致している
+
+JavaScriptを変更した場合は、Node.js 20以降で次も実行します。
+
+```shell
+npm test
+```
 
 ## コミットする
 
@@ -96,12 +126,12 @@ Pull Requestには次を記載します。
 - 実行した検証と結果
 - 未決事項、未実施の確認、運用上の注意
 
-必要に応じて、Pull Requestへ `preview` とコメントしてGitHub Pages Previewを公開します。詳しい手順は[運用ガイド](OPERATIONS.md)を参照してください。
+作業ブランチをpushするとCloudflare Pages Previewが自動で作成されます。詳しい確認手順は[運用ガイド](OPERATIONS.md)を参照してください。
 
-コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue-123-short-description`ブランチの例です。
+コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue/123`ブランチの例です。
 
 ```shell
-git push -u origin issue-123-short-description
+git push -u origin issue/123
 ```
 
 1. GitHubでこのリポジトリを開き、`Compare & pull request`を選ぶ
