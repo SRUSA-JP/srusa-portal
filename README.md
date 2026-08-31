@@ -32,12 +32,10 @@ Basic認証のJavaScriptは、次の責務に分けます。
 
 | パス | 責務 |
 | --- | --- |
-| `functions/_middleware.js` | Cloudflare Pagesが要求する外側のアダプター |
-| `src/authentication/createBasicAuthentication.js` | Cloudflareに依存しない共有Basic認証 |
-| `src/authentication/createBasicAuthentication.test.js` | 認証オブジェクトと同居する単体テスト |
-| `tests/functions/onRequest.test.js` | Cloudflareアダプターとの接続テスト |
+| `functions/_middleware.js` | Cloudflare Pagesの共有Basic認証 |
+| `functionsTest/_middleware.test.js` | middlewareと1対1で対応するテスト |
 
-`functions/`はCloudflare Pagesプロジェクトのルートに置く必要があり、配下のJavaScriptはデプロイ対象になるため、テストを置きません。アプリケーションロジックを`src/`へ分離して単体テストを同居させ、Cloudflareアダプターのテストは実装構成を反映した`tests/functions/`へ置きます。
+`functions/`はCloudflare Pagesプロジェクトのルートに置く必要があり、配下のJavaScriptはデプロイ対象になるため、テストを置きません。テストは兄弟ディレクトリの`functionsTest/`へ置き、対象ファイル名を一致させます。
 
 `docs/`直下へのページやディレクトリの追加、サイト固有のデザイン、公開URLや独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
 

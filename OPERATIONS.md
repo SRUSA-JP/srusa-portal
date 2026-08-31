@@ -22,7 +22,7 @@ Cloudflare PagesプロジェクトはGitHubの`SRUSA-JP/srusa-portal`と連携�
 
 ## Basic認証の仕組み
 
-`functions/_middleware.js`はすべてのリクエストより前に実行され、`src/authentication/createBasicAuthentication.js`の認証処理へリクエストを渡します。
+`functions/_middleware.js`はすべてのリクエストより前に実行されます。
 
 1. Cloudflareの暗号化Secretからユーザー名とパスワードを取得する
 2. Secretが未設定なら`503 Service Unavailable`を返し、コンテンツを公開しない

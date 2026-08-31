@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#functions/*": "./functions/*",
-    "#src/*": "./src/*"
+    "#functions/*": "./functions/*"
   },
   "scripts": {
     "test": "node --test"
