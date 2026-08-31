@@ -9,14 +9,14 @@ const source = await readFile(
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`;
 const { onRequest } = await import(moduleUrl);
 
-function authorizationHeader(username, password) {
+const authorizationHeader = (username, password) => {
   const bytes = new TextEncoder().encode(`${username}:${password}`);
   const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
 
   return `Basic ${btoa(binary)}`;
-}
+};
 
-function createContext(options = {}) {
+const createContext = (options = {}) => {
   const {
     authorization,
     nextResponse = new Response("site", {
@@ -54,7 +54,7 @@ function createContext(options = {}) {
     },
     nextCallCount: () => nextCallCount,
   };
-}
+};
 
 test("Secretが未設定ならfail-closedで503を返す", async () => {
   const { context, nextCallCount } = createContext({ username: undefined });

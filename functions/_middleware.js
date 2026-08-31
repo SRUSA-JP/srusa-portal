@@ -4,7 +4,7 @@ const NO_STORE_HEADERS = {
   "Content-Type": "text/plain; charset=UTF-8",
 };
 
-function unauthorizedResponse() {
+const unauthorizedResponse = () => {
   return new Response("認証が必要です。", {
     status: 401,
     headers: {
@@ -12,16 +12,16 @@ function unauthorizedResponse() {
       "WWW-Authenticate": `Basic realm="${AUTHENTICATION_REALM}", charset="UTF-8"`,
     },
   });
-}
+};
 
-function unavailableResponse() {
+const unavailableResponse = () => {
   return new Response("認証設定を確認してください。", {
     status: 503,
     headers: NO_STORE_HEADERS,
   });
-}
+};
 
-function decodeCredentials(authorization) {
+const decodeCredentials = (authorization) => {
   if (typeof authorization !== "string") {
     return null;
   }
@@ -49,9 +49,9 @@ function decodeCredentials(authorization) {
   } catch {
     return null;
   }
-}
+};
 
-async function securelyEqual(actual, expected) {
+const securelyEqual = async (actual, expected) => {
   const encoder = new TextEncoder();
   const [actualDigest, expectedDigest] = await Promise.all([
     crypto.subtle.digest("SHA-256", encoder.encode(actual)),
@@ -66,9 +66,9 @@ async function securelyEqual(actual, expected) {
   }
 
   return difference === 0;
-}
+};
 
-function protectResponse(response) {
+const protectResponse = (response) => {
   const protectedResponse = new Response(response.body, response);
   const vary = protectedResponse.headers.get("Vary");
 
@@ -84,9 +84,9 @@ function protectResponse(response) {
   }
 
   return protectedResponse;
-}
+};
 
-export async function onRequest(context) {
+export const onRequest = async (context) => {
   const expectedUsername = context.env?.BASIC_AUTH_USERNAME;
   const expectedPassword = context.env?.BASIC_AUTH_PASSWORD;
 
@@ -116,4 +116,4 @@ export async function onRequest(context) {
   }
 
   return protectResponse(await context.next());
-}
+};
