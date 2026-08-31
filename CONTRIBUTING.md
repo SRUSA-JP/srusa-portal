@@ -58,7 +58,7 @@ git switch -c issue/123
 - 個人用の `.env`、セッション、ログ、キャッシュ
 - 公開について同意を確認していない個人情報、写真、位置情報、行動記録
 
-Pull Request Previewも公開URLです。「URLを知っている人だけに共有する」場合でも、外部公開されて困る情報は含めないでください。
+Cloudflare Pages Previewは共有Basic認証の対象ですが、資格情報を知る利用者が閲覧できます。また、リポジトリ自体は公開されています。外部公開されて困る情報は含めないでください。
 
 ## 検証する
 
@@ -75,6 +75,12 @@ git diff --check
 - 内部リンクと外部リンクが意図したURLを指している
 - `site/`、仮想環境、ログ、秘密情報が差分に含まれていない
 - READMEの手順と実際のファイル・コマンドが一致している
+
+`functions/_middleware.js`を変更した場合は、Node.js 20以降で次も実行します。
+
+```shell
+node --test tests/basic-auth.test.mjs
+```
 
 ## コミットする
 
@@ -105,7 +111,7 @@ Pull Requestには次を記載します。
 - 実行した検証と結果
 - 未決事項、未実施の確認、運用上の注意
 
-必要に応じて、Pull Requestへ `preview` とコメントしてGitHub Pages Previewを公開します。詳しい手順は[運用ガイド](OPERATIONS.md)を参照してください。
+作業ブランチをpushするとCloudflare Pages Previewが自動で作成されます。詳しい確認手順は[運用ガイド](OPERATIONS.md)を参照してください。
 
 コミット後、作業ブランチをpushしてPull Requestを作成します。次は`issue/123`ブランチの例です。
 

@@ -8,11 +8,12 @@ SRUSAの情報をまとめる、MkDocsベースの小さなポータルサイト
 
 - `docs/`配下のMarkdownコンテンツ
 - MkDocsの設定と固定したPython依存関係
+- Cloudflare Pagesで共有Basic認証を行う小さなPages Functionsミドルウェア
 - ZedとVS Codeで利用できるDev Container
-- GitHub Actionsによるビルド、本番公開、Pull Request Preview
+- Cloudflare PagesのGit連携によるビルド、本番公開、ブランチPreview
 - 開発者、運用者、AIエージェント向けのルール
 
-このポータルはMkDocs専用です。React、Node.js、Viteなどを使うアプリケーションや、そのビルド成果物は管理しません。インタラクティブな試験機能は別サービスで運用し、ポータルからは外部リンクで案内します。
+このポータルのコンテンツ生成はMkDocs専用です。React、Node.js、Viteなどを使うアプリケーションや、そのビルド成果物は管理しません。`functions/_middleware.js`はCloudflare Pagesの公開経路をBasic認証で保護するためだけに使用します。インタラクティブな試験機能は別サービスで運用し、ポータルからは外部リンクで案内します。
 
 ## サイト構成
 
@@ -81,16 +82,30 @@ mkdocs build --strict
 
 生成される`site/`はコミットしません。
 
+Node.js 20以降を利用できる環境では、Pages FunctionsのBasic認証をテストできます。外部パッケージは使用しません。
+
+```shell
+node --test tests/basic-auth.test.mjs
+```
+
+## 公開先と認証
+
+Cloudflare Pagesの本番候補URLは<https://srusa-portal.pages.dev/>です。`main`以外のブランチをpushすると、Cloudflare PagesがブランチごとのPreview URLを作成します。
+
+サイト全体に共有Basic認証を適用します。ユーザー名とパスワードはCloudflare PagesのProductionとPreviewへ暗号化Secretとして登録し、リポジトリには保存しません。設定名と切り替え手順は[運用ガイド](OPERATIONS.md)を参照してください。
+
+GitHub PagesはCloudflare Pagesへの移行確認中だけ切り戻し先として維持し、Issue #6の完了確認後に停止します。Basic認証の資格情報を知っている利用者を個別に識別・失効することはできないため、正式なDiscord認証・認可は後続MVPで扱います。
+
 ## 変更を送る
 
 変更前にIssueで目的を確認し、最新の`main`からIssue番号を含むブランチを作成します。Markdownの書き方、プライバシー、コミット、Pull Requestのルールは[コントリビューションガイド](CONTRIBUTING.md)を参照してください。
 
-Pull Requestでは、必要に応じて`preview`とコメントするとGitHub Pages Previewを公開できます。本番公開、Preview、`pages-content`ブランチ、失敗時の復旧方法は[運用ガイド](OPERATIONS.md)にまとめています。
+作業ブランチをpushするとCloudflare Pages Previewが自動で作成されます。移行中のGitHub Pages、Cloudflare Pagesの本番・Preview、Basic認証、失敗時の復旧方法は[運用ガイド](OPERATIONS.md)にまとめています。
 
 ## 関連ドキュメント
 
 - [コントリビューションガイド](CONTRIBUTING.md): 変更、検証、コミット、Pull Requestのルール
-- [運用ガイド](OPERATIONS.md): GitHub Pagesの本番・Preview公開と切り戻し
+- [運用ガイド](OPERATIONS.md): Cloudflare Pages、Basic認証、移行中のGitHub Pagesと切り戻し
 - [AIエージェント向け作業ガイド](AGENTS.md): AIが変更するときの範囲と禁止事項
 - [`mkdocs.yml`](mkdocs.yml): サイト、テーマ、自動ナビゲーションの設定
 - [`requirements.txt`](requirements.txt): 固定したPython依存関係
@@ -100,7 +115,8 @@ Pull Requestでは、必要に応じて`preview`とコメントするとGitHub P
 - React、Node.js、Viteなどを使う別アプリケーションのソースとビルド成果物
 - Sandbox側のタグ、コンテナイメージ、リリース成果物
 - APIキー、token、パスワードなどの認証情報
+- Pages Functions用の`.dev.vars`と、Cloudflareへ登録したSecretの値
 - 個人用の`.env`、仮想環境、キャッシュ、ログ
 - MkDocsが生成する`site/`
 
-`pages-content`だけは公開状態を保持するデプロイ専用ブランチとして、GitHub Actionsが生成物を保存します。このブランチを通常の開発や`main`へのマージには使用しません。
+`pages-content`はGitHub Pagesを切り戻し先として維持している間だけ残すデプロイ専用ブランチです。通常の開発や`main`へのマージには使用せず、Cloudflare Pagesの移行確認後にGitHub Pagesとともに廃止します。
