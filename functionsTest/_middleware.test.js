@@ -43,14 +43,21 @@ const createContext = (options = {}) => {
   };
 };
 
-test("Secretが未設定ならfail-closedで503を返す", async () => {
-  const { context, nextCallCount } = createContext({ username: undefined });
-  const response = await onRequest(context);
+for (const [label, options] of [
+  ["ユーザー名が未設定", { username: undefined }],
+  ["パスワードが未設定", { password: undefined }],
+  ["ユーザー名が空文字列", { username: "" }],
+  ["パスワードが空文字列", { password: "" }],
+]) {
+  test(`Secretの${label}ならfail-closedで503を返す`, async () => {
+    const { context, nextCallCount } = createContext(options);
+    const response = await onRequest(context);
 
-  assert.equal(response.status, 503);
-  assert.equal(response.headers.get("Cache-Control"), "private, no-store");
-  assert.equal(nextCallCount(), 0);
-});
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+    assert.equal(nextCallCount(), 0);
+  });
+}
 
 test("AuthorizationヘッダーがなければBasic認証を要求する", async () => {
   const { context, nextCallCount } = createContext();

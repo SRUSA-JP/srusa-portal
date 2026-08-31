@@ -37,7 +37,7 @@ Basic認証のJavaScriptは、次の責務に分けます。
 
 `functions/`はCloudflare Pagesプロジェクトのルートに置く必要があり、配下のJavaScriptはデプロイ対象になるため、テストを置きません。テストは兄弟ディレクトリの`functionsTest/`へ置き、対象ファイル名を一致させます。
 
-`docs/`直下へのページやディレクトリの追加、サイト固有のデザイン、公開URLや独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
+`docs/`直下へのページやディレクトリの追加、サイト固有のデザイン、独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
 
 ## 開発環境
 
@@ -52,7 +52,7 @@ Dockerと、Dev Containerに対応したエディターを用意します。
 - Zed: リポジトリを開いたときに表示される`Open in Container`を選びます。表示されない場合は、コマンドパレットの`Project: Open Remote`からDev Containerを選びます。
 - VS Code: Dev Containers拡張機能を導入し、コマンドパレットから`Dev Containers: Reopen in Container`を実行します。
 
-コンテナ作成時に`requirements.txt`の依存関係が自動的にインストールされます。コンテナ内のターミナルでプレビューを起動してください。
+コンテナ作成時に`requirements.txt`の依存関係が自動的にインストールされます。Node.js 20も含まれるため、MkDocsの確認とPages Functionsのテストを同じ環境で実行できます。コンテナ内のターミナルでプレビューを起動してください。
 
 ```shell
 mkdocs serve --dev-addr=0.0.0.0:8000
@@ -91,7 +91,7 @@ mkdocs build --strict
 
 生成される`site/`はコミットしません。
 
-Node.js 20以降を利用できる環境では、Pages FunctionsのBasic認証をテストできます。`package.json`はES Modules形式とテストコマンドを定義するために使用し、外部パッケージは使用しません。
+Pages FunctionsのBasic認証をテストします。Dev ContainerにはNode.js 20を含めています。ホスト環境で実行する場合は、Node.js 20以降を用意してください。`package.json`はES Modules形式とテストコマンドを定義するために使用し、外部パッケージは使用しません。
 
 ```shell
 npm test
