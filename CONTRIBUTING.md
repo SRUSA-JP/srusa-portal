@@ -7,6 +7,8 @@
 - `docs/` 配下の Markdown コンテンツ
 - `mkdocs.yml`のサイト、テーマ、自動ナビゲーション設定
 - `requirements.txt` の Python 依存関係
+- `package.json`のJavaScriptモジュール・テスト設定
+- `functions/_middleware.js`のCloudflare Pages認証ミドルウェア
 - `.devcontainer/` の共通開発環境
 - `.github/workflows/` のビルド・公開設定
 - リポジトリ内の開発・運用ドキュメント
@@ -60,6 +62,18 @@ git switch -c issue/123
 
 Cloudflare Pages Previewは共有Basic認証の対象ですが、資格情報を知る利用者が閲覧できます。また、リポジトリ自体は公開されています。外部公開されて困る情報は含めないでください。
 
+## JavaScriptを編集する
+
+- JavaScriptはES Modules形式で記述し、モジュール形式は`package.json`の`type`で指定します。
+- 関数は、外部APIが特定の宣言形式を要求する場合を除き、アロー関数で定義します。
+- 外部へexportする公開関数には、目的、引数、戻り値を説明するJSDocを記述します。
+- 外部サービス固有の入口は薄いアダプターにし、認証などのアプリケーションロジックは`src/`へ分離します。依存方向は外側から内側に向けます。
+- 関連する状態と処理をまとめる場合は、factory関数内へ非公開処理を閉じ込め、利用側に必要な操作だけをオブジェクトとして返します。
+- 公開関数ごとに、関数名と一致する`<公開関数名>.test.js`を作成します。外部サービスがファイル名を指定する場合は、その指定を優先します。
+- 振る舞いを変更するときは、期待する振る舞いをテストで表現し、実装と同じ変更内で成功させます。
+- 責務のない層やクラスは追加せず、現在の規模で分離する意味がある境界だけを作ります。
+- 実行時依存関係を追加する場合は、Issueで必要性、公開処理、保守への影響を確認します。
+
 ## 検証する
 
 変更後は仮想環境またはDev Containerで次を実行します。
@@ -76,10 +90,10 @@ git diff --check
 - `site/`、仮想環境、ログ、秘密情報が差分に含まれていない
 - READMEの手順と実際のファイル・コマンドが一致している
 
-`functions/_middleware.js`を変更した場合は、Node.js 20以降で次も実行します。
+JavaScriptを変更した場合は、Node.js 20以降で次も実行します。
 
 ```shell
-node --test tests/basic-auth.test.mjs
+npm test
 ```
 
 ## コミットする

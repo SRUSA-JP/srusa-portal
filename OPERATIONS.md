@@ -15,14 +15,14 @@ Cloudflare PagesプロジェクトはGitHubの`SRUSA-JP/srusa-portal`と連携�
 | 設定 | 値 |
 | --- | --- |
 | Project name | `srusa-portal` |
-| Build command | `node --test tests/basic-auth.test.mjs && python -m pip install -r requirements.txt && mkdocs build --strict` |
+| Build command | `npm test && python -m pip install -r requirements.txt && mkdocs build --strict` |
 | Build output directory | `site` |
 | Root directory | リポジトリルート |
 | Python | `.python-version`の3.11 |
 
 ## Basic認証の仕組み
 
-`functions/_middleware.js`はすべてのリクエストより前に実行されます。
+`functions/_middleware.js`はすべてのリクエストより前に実行され、`src/authentication/createBasicAuthentication.js`の認証処理へリクエストを渡します。
 
 1. Cloudflareの暗号化Secretからユーザー名とパスワードを取得する
 2. Secretが未設定なら`503 Service Unavailable`を返し、コンテンツを公開しない

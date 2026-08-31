@@ -1,6 +1,6 @@
 # srusa-portal AIエージェント作業ガイド
 
-この文書は、AIエージェントがこのリポジトリを変更するときの固有ルールです。人を含む共通の変更手順は[CONTRIBUTING.md](CONTRIBUTING.md)、公開・復旧手順は[OPERATIONS.md](OPERATIONS.md)を参照してください。
+この文書は、AIエージェントがこのリポジトリを変更するときの固有ルールです。人を含む共通の変更手順とコーディングルールは[CONTRIBUTING.md](CONTRIBUTING.md)、公開・復旧手順は[OPERATIONS.md](OPERATIONS.md)を参照してください。この文書へ共通ルールを重複して記載しません。
 
 ## 作業を始める前に
 
@@ -55,7 +55,7 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 ## 作業の進め方
 
 - 目的に必要な範囲で、小さくレビューしやすい変更を作る
-- JavaScriptの関数は、CloudflareのAPIなどが特定の宣言形式を要求する場合を除き、アロー関数で定義する
+- 実装時は`CONTRIBUTING.md`のコーディングルールに従う
 - 実行可能な手順を変更したら、READMEと関連ガイドも更新する
 - 公開設定を変更する場合は、権限、秘密情報、公開先、失敗時の復旧方法を確認する
 - Issueのcloseやreopen、Pull Requestのcloseなどの状態変更は、ユーザーから明示的な指示がある場合だけ行う
@@ -72,10 +72,4 @@ mkdocs build --strict
 git diff --check
 ```
 
-`functions/_middleware.js`を変更した場合は、Node.js 20以降で次も実行します。
-
-```shell
-node --test tests/basic-auth.test.mjs
-```
-
-さらに、READMEと実際の構成・コマンド、Markdownリンクとナビゲーション、秘密情報や不要な生成物の混入を確認してください。実行できなかった確認は、理由と影響をPull Requestに記載します。
+さらに、`CONTRIBUTING.md`に記載された変更対象別の検証、READMEと実際の構成・コマンド、Markdownリンクとナビゲーション、秘密情報や不要な生成物の混入を確認してください。実行できなかった確認は、理由と影響をPull Requestに記載します。

@@ -28,6 +28,17 @@ SRUSAの情報をまとめる、MkDocsベースの小さなポータルサイト
 
 以前の`/mountaineering/`と活動記録URLには、`docs/mountaineering/`配下の静的HTMLで新しい日本語URLへのリダイレクトを提供します。このディレクトリにはMarkdownを追加しません。
 
+Basic認証のJavaScriptは、次の責務に分けます。
+
+| パス | 責務 |
+| --- | --- |
+| `functions/_middleware.js` | Cloudflare Pagesが要求する外側のアダプター |
+| `src/authentication/createBasicAuthentication.js` | Cloudflareに依存しない共有Basic認証 |
+| `tests/createBasicAuthentication.test.js` | 認証オブジェクトの振る舞い |
+| `tests/onRequest.test.js` | Cloudflareアダプターとの接続 |
+
+`functions/`はCloudflare Pagesプロジェクトのルートに置く必要があるため、別の親ディレクトリへ移動しません。アプリケーションロジックを`src/`へ分離し、`functions/`にはCloudflareとの接続だけを残します。
+
 `docs/`直下へのページやディレクトリの追加、サイト固有のデザイン、公開URLや独自ドメインは未決事項です。変更する場合は、実装前にIssueで影響を確認します。
 
 ## 開発環境
@@ -82,10 +93,10 @@ mkdocs build --strict
 
 生成される`site/`はコミットしません。
 
-Node.js 20以降を利用できる環境では、Pages FunctionsのBasic認証をテストできます。外部パッケージは使用しません。
+Node.js 20以降を利用できる環境では、Pages FunctionsのBasic認証をテストできます。`package.json`はES Modules形式とテストコマンドを定義するために使用し、外部パッケージは使用しません。
 
 ```shell
-node --test tests/basic-auth.test.mjs
+npm test
 ```
 
 ## 公開先と認証
