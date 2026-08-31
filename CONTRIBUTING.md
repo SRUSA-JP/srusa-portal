@@ -10,7 +10,6 @@
 - `package.json`のJavaScriptモジュール・テスト設定
 - `functions/_middleware.js`のCloudflare Pages認証ミドルウェア
 - `.devcontainer/` の共通開発環境
-- `.github/workflows/` のビルド・公開設定
 - リポジトリ内の開発・運用ドキュメント
 
 React、Node.js、Viteなどを使うアプリケーションや、そのビルド成果物は管理しません。インタラクティブな試験機能は別サービスで管理し、このポータルからは外部リンクで案内します。

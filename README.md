@@ -41,7 +41,7 @@ Basic認証のJavaScriptは、次の責務に分けます。
 
 ## 開発環境
 
-Pythonのバージョンは`.python-version`で3.11に固定しています。Dev ContainerとGitHub Actionsも同じバージョンを使用します。
+Pythonのバージョンは`.python-version`で3.11に固定しています。Dev ContainerとCloudflare Pagesのビルドも同じバージョンを使用します。
 
 ### Dev Containerを使用する（推奨）
 
@@ -103,18 +103,18 @@ Cloudflare Pagesの本番候補URLは<https://srusa-portal.pages.dev/>です。`
 
 サイト全体に共有Basic認証を適用します。ユーザー名とパスワードはCloudflare PagesのProductionとPreviewへ暗号化Secretとして登録し、リポジトリには保存しません。設定名と切り替え手順は[運用ガイド](OPERATIONS.md)を参照してください。
 
-GitHub PagesはCloudflare Pagesへの移行確認中だけ切り戻し先として維持し、Issue #6の完了確認後に停止します。Basic認証の資格情報を知っている利用者を個別に識別・失効することはできないため、正式なDiscord認証・認可は後続MVPで扱います。
+GitHub Pagesは公開先として使用しません。以前のGitHub Pages公開が残っている場合は、GitHubの`Settings` → `Pages`で停止してください。Basic認証の資格情報を知っている利用者を個別に識別・失効することはできないため、正式なDiscord認証・認可は後続MVPで扱います。
 
 ## 変更を送る
 
 変更前にIssueで目的を確認し、最新の`main`からIssue番号を含むブランチを作成します。Markdownの書き方、プライバシー、コミット、Pull Requestのルールは[コントリビューションガイド](CONTRIBUTING.md)を参照してください。
 
-作業ブランチをpushするとCloudflare Pages Previewが自動で作成されます。移行中のGitHub Pages、Cloudflare Pagesの本番・Preview、Basic認証、失敗時の復旧方法は[運用ガイド](OPERATIONS.md)にまとめています。
+作業ブランチをpushするとCloudflare Pages Previewが自動で作成されます。Cloudflare Pagesの本番・Preview、Basic認証、失敗時の復旧方法は[運用ガイド](OPERATIONS.md)にまとめています。
 
 ## 関連ドキュメント
 
 - [コントリビューションガイド](CONTRIBUTING.md): 変更、検証、コミット、Pull Requestのルール
-- [運用ガイド](OPERATIONS.md): Cloudflare Pages、Basic認証、移行中のGitHub Pagesと切り戻し
+- [運用ガイド](OPERATIONS.md): Cloudflare Pages、Basic認証、デプロイと切り戻し
 - [AIエージェント向け作業ガイド](AGENTS.md): AIが変更するときの範囲と禁止事項
 - [`mkdocs.yml`](mkdocs.yml): サイト、テーマ、自動ナビゲーションの設定
 - [`requirements.txt`](requirements.txt): 固定したPython依存関係
@@ -128,4 +128,4 @@ GitHub PagesはCloudflare Pagesへの移行確認中だけ切り戻し先とし�
 - 個人用の`.env`、仮想環境、キャッシュ、ログ
 - MkDocsが生成する`site/`
 
-`pages-content`はGitHub Pagesを切り戻し先として維持している間だけ残すデプロイ専用ブランチです。通常の開発や`main`へのマージには使用せず、Cloudflare Pagesの移行確認後にGitHub Pagesとともに廃止します。
+GitHub Pagesを以前利用していた場合、不要になった`pages-content`ブランチはGitHub Pagesの停止を確認してから削除します。

@@ -1,6 +1,6 @@
 # 運用ガイド
 
-この文書は、Cloudflare PagesでMkDocsサイトを公開し、共有Basic認証を設定・変更・復旧する方法をまとめます。GitHub PagesはIssue #6の移行確認が終わるまで切り戻し先として維持します。
+この文書は、Cloudflare PagesでMkDocsサイトを公開し、共有Basic認証を設定・変更・復旧する方法をまとめます。
 
 ## 公開構成
 
@@ -8,9 +8,10 @@
 | --- | --- | --- | --- |
 | Cloudflare Production | `main`へのpush | `https://srusa-portal.pages.dev/` | Pages Functionsの共有Basic認証 |
 | Cloudflare Preview | `main`以外へのpush | ブランチaliasとデプロイ固有URL | Pages Functionsの共有Basic認証 |
-| GitHub Pages | 移行完了まで既存Workflowを維持 | `https://srusa-jp.github.io/srusa-portal/` | なし。移行中だけの切り戻し先 |
 
 Cloudflare PagesプロジェクトはGitHubの`SRUSA-JP/srusa-portal`と連携し、Production branchに`main`を使用します。
+
+GitHub PagesとGitHub Actionsによるデプロイは使用しません。`main`へのマージまたはpushでProductionが、`main`以外へのpushでPreviewがCloudflare Pagesから自動デプロイされます。
 
 | 設定 | 値 |
 | --- | --- |
@@ -49,17 +50,13 @@ Secretの値をIssue、Pull Request、コミット、ログへ書かないでく
 
 ユーザー名にはコロンを使用しません。パスワードは十分に長いランダムな値にし、他サービスと共用しません。共有先から外す人が出た場合や漏えいが疑われる場合は、パスワードを変更して再デプロイします。
 
-## Previewで切り替えを確認する
+## Previewを確認する
 
-Cloudflare AccessからProductionとPreviewを同時に外さず、先にPreviewだけでBasic認証を確認します。
-
-1. `issue/6`へ実装をpushし、Cloudflare PagesのPreviewデプロイ成功を確認する
+1. 作業ブランチをpushし、Cloudflare PagesのPreviewデプロイ成功を確認する
 2. Preview用Secretが設定された状態で、新しいデプロイを実行する
-3. Zero Trustの`Access controls` → `Applications`から`srusa-portal - Cloudflare Pages`を開く
-4. Destinationの`*.srusa-portal.pages.dev`だけを外し、Productionの`srusa-portal.pages.dev`は残して保存する
-5. シークレットウィンドウでブランチalias URLを開き、ブラウザのBasic認証ダイアログが出ることを確認する
-6. 誤った資格情報では表示できず、正しい資格情報で表示できることを確認する
-7. `/登山部/`、`/search/search_index.json`、CSSなどの静的asset、`/mountaineering/`も直接開いて同じ認証が必要なことを確認する
+3. シークレットウィンドウでブランチalias URLを開き、ブラウザのBasic認証ダイアログが出ることを確認する
+4. 誤った資格情報では表示できず、正しい資格情報で表示できることを確認する
+5. `/登山部/`、`/search/search_index.json`、CSSなどの静的asset、`/mountaineering/`も直接開いて同じ認証が必要なことを確認する
 
 想定するHTTP応答は次のとおりです。
 
@@ -72,15 +69,17 @@ Cloudflare AccessからProductionとPreviewを同時に外さず、先にPreview
 
 ## Productionへ切り替える
 
-1. Previewの確認結果をPull RequestとIssue #6へ記録する
+1. Previewの確認結果をPull RequestとIssueへ記録する
 2. Production用Secretを登録済みであることを確認する
 3. Pull Requestを`main`へマージする
 4. Cloudflare PagesのProductionデプロイが成功したことを確認する
-5. Cloudflare Accessでログインした状態からProduction URLを開き、その先でBasic認証が動作することを確認する
-6. Basic認証の正常系と異常系を確認した後、`srusa-portal - Cloudflare Pages`のAccess Applicationを削除する
-7. シークレットウィンドウからProductionとPreviewを再確認し、Cloudflare AccessではなくBasic認証だけが表示されることを確認する
+5. シークレットウィンドウでProduction URLを開き、Basic認証の正常系と異常系を確認する
 
-Access Applicationを削除する前に、ProductionとPreviewのSecret、デプロイ、Basic認証を必ず確認します。削除後に問題が起きた場合は、同じhostnameをDestinationに持つAccess ApplicationとAllow Policyを再作成します。
+## 手動で再デプロイする
+
+通常はGitへのpushだけでデプロイされるため、手動操作は不要です。同じコミットをもう一度ビルドしたい場合だけ、Cloudflare Dashboardの`Workers & Pages` → `srusa-portal` → `Deployments`から対象のデプロイを開き、`Retry deployment`を実行します。
+
+GitHub上の任意のボタンから再デプロイする仕組みは、Deploy HookまたはCloudflare API tokenをGitHub ActionsのSecretに登録すれば作れます。ただし新たなSecretと権限管理が必要になるため、必要性をIssueで確認してから追加します。
 
 ## 資格情報を変更する
 
@@ -104,33 +103,16 @@ Access Applicationを削除する前に、ProductionとPreviewのSecret、デプ
 
 ## 切り戻す
 
-### GitHub Pagesを停止する前
-
-1. GitHub Pagesの公開URLが表示できることを確認する
-2. Cloudflare Access ApplicationへProductionとPreviewのDestinationを戻す
-3. Basic認証の実装またはSecretを修正し、Previewから再確認する
-
-GitHub Pagesは一般公開のため、切り戻し中も限定公開情報を載せません。
-
-### GitHub Pagesを停止した後
-
 1. Cloudflare Pagesの直前に正常だったデプロイを確認する
 2. 問題を起こしたコミットをrevertするPull Requestを作る
-3. 必要ならAccess Applicationを再作成し、Basic認証修正中の保護に使う
+3. PreviewでBasic認証と主要URLを確認する
 4. `main`へマージし、Productionデプロイを確認する
 
-## GitHub Pagesを停止する
+GitHub Pagesは切り戻し先として使用しません。Cloudflare側の設定変更が原因の場合は、変更前の設定へ戻し、必要ならCloudflareのデプロイを再試行します。
 
-この作業はCloudflare ProductionとPreviewのBasic認証、主要URL、復旧手順を確認した後に行います。
+## 以前のGitHub Pagesを停止する
 
-1. `.github/workflows/deploy-pages.yml`と`.github/workflows/build-pr.yml`を削除するPull Requestを作成する
-2. GitHubの`Settings` → `Pages`で公開を停止する
-3. `https://srusa-jp.github.io/srusa-portal/`からコンテンツを取得できないことを確認する
-4. `pages-content`ブランチが不要であることを確認して削除する
-5. README、OPERATIONS、AGENTSから移行中の記述を削除する
-6. Issue #6と親Issue #1へ停止結果とCloudflareへの切り戻し方法を記録する
-
-GitHub Pagesの停止と`pages-content`ブランチ削除は復旧経路を減らすため、Cloudflare側の確認前には行いません。
+GitHub Pagesを以前利用していた場合は、GitHubの`Settings` → `Pages`で公開を停止します。停止後、以前の公開URLへアクセスできないことを確認してから、不要な`pages-content`ブランチを削除します。
 
 ## 公開情報と外部サービス
 

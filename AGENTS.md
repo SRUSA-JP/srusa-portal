@@ -39,7 +39,7 @@ Sandboxは独立した外部サービスとして扱い、このポータルに�
 - `functions/_middleware.js`で全公開経路へ共有Basic認証を適用する
 - Basic認証のユーザー名とパスワードはCloudflareの暗号化Secretだけに保存し、コード、Issue、ログへ記載しない
 - Secretがない場合と認証処理に失敗した場合はfail-closedとし、静的コンテンツを公開しない
-- GitHub Pagesと`pages-content`はIssue #6の移行確認中だけ切り戻し先として維持し、確認後に廃止する
+- GitHub Pagesは公開先として使用しない。以前の`pages-content`ブランチは、GitHub Pagesの停止を確認してから削除する
 
 `docs/`直下へのページやディレクトリの追加、依存関係、公開先を追加する場合は、未決事項としてナビゲーション、URL、運用への影響を提示し、ユーザーの合意を得てから変更してください。表示名や並び順を固定する目的で`nav`を再追加しないでください。
 
