@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { onRequest } from "../functions/_middleware.js";
+import { onRequest } from "#functions/_middleware.js";
 
 const authorizationHeader = (username, password) => {
   return `Basic ${btoa(`${username}:${password}`)}`;

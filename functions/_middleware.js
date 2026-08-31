@@ -1,4 +1,4 @@
-import { createBasicAuthentication } from "../src/authentication/createBasicAuthentication.js";
+import { createBasicAuthentication } from "#src/authentication/createBasicAuthentication.js";
 
 /**
  * Cloudflare Pagesへの全リクエストを共有Basic認証で保護する。
@@ -17,10 +17,10 @@ export const onRequest = async (context) => {
   const { authenticate } = createBasicAuthentication({
     username: context.env?.BASIC_AUTH_USERNAME,
     password: context.env?.BASIC_AUTH_PASSWORD,
-  });
-
-  return authenticate({
     request: context.request,
     next: () => context.next(),
   });
+  const response = await authenticate();
+
+  return response;
 };

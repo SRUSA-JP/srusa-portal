@@ -2,6 +2,10 @@
   "name": "srusa-portal",
   "private": true,
   "type": "module",
+  "imports": {
+    "#functions/*": "./functions/*",
+    "#src/*": "./src/*"
+  },
   "scripts": {
     "test": "node --test"
   },

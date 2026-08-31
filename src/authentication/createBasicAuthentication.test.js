@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createBasicAuthentication } from "../src/authentication/createBasicAuthentication.js";
+import { createBasicAuthentication } from "#src/authentication/createBasicAuthentication.js";
 
 const authorizationHeader = (username, password) => {
   const bytes = new TextEncoder().encode(`${username}:${password}`);
@@ -10,7 +10,7 @@ const authorizationHeader = (username, password) => {
   return `Basic ${btoa(binary)}`;
 };
 
-const createInput = (authorization) => {
+const createSubject = ({ authorization, username, password } = {}) => {
   let nextCallCount = 0;
   const headers = new Headers();
 
@@ -18,38 +18,40 @@ const createInput = (authorization) => {
     headers.set("Authorization", authorization);
   }
 
-  return {
-    input: {
-      request: new Request("https://srusa-portal.pages.dev/", { headers }),
-      next: async () => {
-        nextCallCount += 1;
-        return new Response("site", {
-          headers: { "Cache-Control": "public, max-age=3600" },
-        });
-      },
+  const { authenticate } = createBasicAuthentication({
+    username,
+    password,
+    request: new Request("https://srusa-portal.pages.dev/", { headers }),
+    next: async () => {
+      nextCallCount += 1;
+      return new Response("site", {
+        headers: { "Cache-Control": "public, max-age=3600" },
+      });
     },
+  });
+
+  return {
+    authenticate,
     nextCallCount: () => nextCallCount,
   };
 };
 
 test("Secretが未設定ならfail-closedで503を返す", async () => {
-  const { authenticate } = createBasicAuthentication({
+  const { authenticate, nextCallCount } = createSubject({
     password: "temporary-password",
   });
-  const { input, nextCallCount } = createInput();
-  const response = await authenticate(input);
+  const response = await authenticate();
 
   assert.equal(response.status, 503);
   assert.equal(response.headers.get("Cache-Control"), "private, no-store");
   assert.equal(nextCallCount(), 0);
 });
 test("AuthorizationヘッダーがなければBasic認証を要求する", async () => {
-  const { authenticate } = createBasicAuthentication({
+  const { authenticate, nextCallCount } = createSubject({
     username: "member",
     password: "temporary-password",
   });
-  const { input, nextCallCount } = createInput();
-  const response = await authenticate(input);
+  const response = await authenticate();
 
   assert.equal(response.status, 401);
   assert.equal(
@@ -65,12 +67,12 @@ for (const authorization of [
   `Basic ${btoa("username-without-separator")}`,
 ]) {
   test(`不正なAuthorizationヘッダーを拒否する: ${authorization}`, async () => {
-    const { authenticate } = createBasicAuthentication({
+    const { authenticate, nextCallCount } = createSubject({
+      authorization,
       username: "member",
       password: "temporary-password",
     });
-    const { input, nextCallCount } = createInput(authorization);
-    const response = await authenticate(input);
+    const response = await authenticate();
 
     assert.equal(response.status, 401);
     assert.equal(nextCallCount(), 0);
@@ -78,42 +80,36 @@ for (const authorization of [
 }
 
 test("誤ったユーザー名を拒否する", async () => {
-  const { authenticate } = createBasicAuthentication({
+  const { authenticate, nextCallCount } = createSubject({
+    authorization: authorizationHeader("outsider", "temporary-password"),
     username: "member",
     password: "temporary-password",
   });
-  const { input, nextCallCount } = createInput(
-    authorizationHeader("outsider", "temporary-password"),
-  );
-  const response = await authenticate(input);
+  const response = await authenticate();
 
   assert.equal(response.status, 401);
   assert.equal(nextCallCount(), 0);
 });
 
 test("誤ったパスワードを拒否する", async () => {
-  const { authenticate } = createBasicAuthentication({
+  const { authenticate, nextCallCount } = createSubject({
+    authorization: authorizationHeader("member", "wrong-password"),
     username: "member",
     password: "temporary-password",
   });
-  const { input, nextCallCount } = createInput(
-    authorizationHeader("member", "wrong-password"),
-  );
-  const response = await authenticate(input);
+  const response = await authenticate();
 
   assert.equal(response.status, 401);
   assert.equal(nextCallCount(), 0);
 });
 
 test("正しい資格情報なら静的コンテンツを返してキャッシュを制限する", async () => {
-  const { authenticate } = createBasicAuthentication({
+  const { authenticate, nextCallCount } = createSubject({
+    authorization: authorizationHeader("member", "temporary-password"),
     username: "member",
     password: "temporary-password",
   });
-  const { input, nextCallCount } = createInput(
-    authorizationHeader("member", "temporary-password"),
-  );
-  const response = await authenticate(input);
+  const response = await authenticate();
 
   assert.equal(response.status, 200);
   assert.equal(await response.text(), "site");
@@ -125,9 +121,12 @@ test("正しい資格情報なら静的コンテンツを返してキャッシ�
 test("UTF-8の資格情報とコロンを含むパスワードを扱える", async () => {
   const username = "利用者";
   const password = "仮:パスワード";
-  const { authenticate } = createBasicAuthentication({ username, password });
-  const { input } = createInput(authorizationHeader(username, password));
-  const response = await authenticate(input);
+  const { authenticate } = createSubject({
+    authorization: authorizationHeader(username, password),
+    username,
+    password,
+  });
+  const response = await authenticate();
 
   assert.equal(response.status, 200);
 });

@@ -3,16 +3,20 @@
  *
  * @param {{
  *   username?: string,
- *   password?: string
- * }} credentials Cloudflare Secretから取得した共有資格情報
+ *   password?: string,
+ *   request: Request,
+ *   next: () => Promise<Response>
+ * }} input 共有資格情報と認証対象のリクエスト
  * @returns {{
- *   authenticate: (input: {
- *     request: Request,
- *     next: () => Promise<Response>
- *   }) => Promise<Response>
+ *   authenticate: () => Promise<Response>
  * }} 認証処理として公開する操作
  */
-export const createBasicAuthentication = ({ username, password }) => {
+export const createBasicAuthentication = ({
+  username,
+  password,
+  request,
+  next,
+}) => {
   const authenticationRealm = "SRUSA Portal";
   const noStoreHeaders = {
     "Cache-Control": "private, no-store",
@@ -104,13 +108,9 @@ export const createBasicAuthentication = ({ username, password }) => {
   /**
    * リクエストの共有Basic認証を検証し、成功時だけ後続処理を実行する。
    *
-   * @param {{
-   *   request: Request,
-   *   next: () => Promise<Response>
-   * }} input 認証対象のリクエストと後続処理
    * @returns {Promise<Response>} 認証結果または認証済みレスポンス
    */
-  const authenticate = async ({ request, next }) => {
+  const authenticate = async () => {
     if (
       typeof username !== "string" ||
       username.length === 0 ||
